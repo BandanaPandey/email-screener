@@ -1,0 +1,12 @@
+# Node
+node_modules/
+.next/
+
+# Rails
+log/
+tmp/
+vendor/bundle/
+
+# Env
+.env
+.env.local
