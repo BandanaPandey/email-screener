@@ -7,8 +7,9 @@ class EmailsController < ApplicationController
   end
 
   def sync
-    Gmail::FetchEmailsService.new(@user).call
-    render json: { message: "Sync started" }
+    #EmailSyncJob.perform_later(@user.id)
+    EmailSyncJob.perform_now(@user.id) # For testing, remove in production
+    render json: { message: "Email sync started in background" }
   end
 
   private

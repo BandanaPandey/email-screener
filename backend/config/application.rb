@@ -43,5 +43,6 @@ module Backend
     # Enable cookies + sessions for OmniAuth
     config.middleware.use ActionDispatch::Cookies
     config.middleware.use ActionDispatch::Session::CookieStore
+    config.active_job.queue_adapter = :sidekiq
   end
 end
