@@ -1,4 +1,4 @@
-module Gmail
+module Google
   class RefreshTokenService
     TOKEN_URL = "https://oauth2.googleapis.com/token"
 

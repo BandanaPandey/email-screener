@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_04_05_060500) do
+ActiveRecord::Schema[8.1].define(version: 2026_04_07_042944) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
 
@@ -20,6 +20,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_04_05_060500) do
     t.datetime "expires_at"
     t.string "provider"
     t.text "refresh_token"
+    t.string "uid"
     t.datetime "updated_at", null: false
     t.bigint "user_id", null: false
     t.index ["user_id"], name: "index_connected_accounts_on_user_id"
@@ -29,6 +30,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_04_05_060500) do
     t.text "body"
     t.datetime "created_at", null: false
     t.string "external_id"
+    t.string "provider"
     t.datetime "received_at"
     t.string "sender"
     t.string "subject"
