@@ -1,12 +1,13 @@
 require 'faraday'
 require 'json'
+include ActionView::Helpers::SanitizeHelper
 
 module EmailProviders
   class GmailService < BaseService
     BASE_URL = "https://gmail.googleapis.com/gmail/v1/users/me/messages"
 
     def fetch_emails
-      puts("Fetching emails for account with Gmail: #{@account.id}")
+      puts("Fetching emails for account with ID: #{@account.id}")
       messages = list_messages
 
       messages.each do |msg|
@@ -31,14 +32,43 @@ module EmailProviders
 
       data = JSON.parse(res.body)
       headers = data.dig("payload", "headers") || []
+      body = extract_body(data["payload"])
 
       create_email(
         external_id: message_id,
         subject: find_header(headers, "Subject"),
         sender: find_header(headers, "From"),
-        body: "",
+        body: body,
         received_at: Time.current
       )
+    end
+
+    def extract_body(payload)
+      return "" unless payload
+
+      # Case 1: direct body
+      if payload["body"] && payload["body"]["data"]
+        return decode_body(payload["body"]["data"])
+      end
+
+      # Case 2: multipart
+      if payload["parts"]
+        payload["parts"].each do |part|
+          if part["mimeType"] == "text/plain"
+            return decode_body(part.dig("body", "data"))
+          end
+        end
+
+        # fallback to HTML
+        payload["parts"].each do |part|
+          if part["mimeType"] == "text/html"
+            html = decode_body(part.dig("body", "data"))
+            return strip_html(html)
+          end
+        end
+      end
+
+      ""
     end
 
     # ---------- TOKEN HANDLING ----------
@@ -46,6 +76,17 @@ module EmailProviders
       if @account.expired?
         Google::RefreshTokenService.new(@account).call
       end
+    end
+
+    def decode_body(data)
+      return "" unless data
+
+      decoded = Base64.urlsafe_decode64(data)
+      decoded.force_encoding("UTF-8")
+    end
+
+    def strip_html(html)
+      ActionView::Base.full_sanitizer.sanitize(html)
     end
 
     def safe_get(url)
