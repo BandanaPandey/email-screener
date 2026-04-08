@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_04_07_042944) do
+ActiveRecord::Schema[8.1].define(version: 2026_04_08_034841) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
 
@@ -24,6 +24,16 @@ ActiveRecord::Schema[8.1].define(version: 2026_04_07_042944) do
     t.datetime "updated_at", null: false
     t.bigint "user_id", null: false
     t.index ["user_id"], name: "index_connected_accounts_on_user_id"
+  end
+
+  create_table "email_insights", force: :cascade do |t|
+    t.string "category"
+    t.float "confidence"
+    t.datetime "created_at", null: false
+    t.bigint "email_id", null: false
+    t.text "reasoning"
+    t.datetime "updated_at", null: false
+    t.index ["email_id"], name: "index_email_insights_on_email_id"
   end
 
   create_table "emails", force: :cascade do |t|
@@ -52,5 +62,6 @@ ActiveRecord::Schema[8.1].define(version: 2026_04_07_042944) do
   end
 
   add_foreign_key "connected_accounts", "users"
+  add_foreign_key "email_insights", "emails"
   add_foreign_key "emails", "users"
 end

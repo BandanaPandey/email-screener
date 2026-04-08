@@ -15,7 +15,7 @@ module EmailProviders
     def create_email(attrs)
       return if Email.exists?(external_id: attrs[:external_id], provider: @account.provider)
 
-      Email.create!(
+      email = Email.create!(
         user: @user,
         subject: attrs[:subject],
         sender: attrs[:sender],
@@ -24,6 +24,10 @@ module EmailProviders
         received_at: attrs[:received_at] || Time.current,
         provider: @account.provider
       )
+
+      # 🔥 Trigger async classification
+      #EmailProcessingJob.perform_later(email.id)
+      EmailProcessingJob.perform_now(email.id)
     end
   end
 end
