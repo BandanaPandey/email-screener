@@ -3,6 +3,8 @@ type Props = {
 };
 
 export default function EmailDetail({ email }: Props) {
+  const insight = email.email_insight;
+
   return (
     <div>
       <h2 className="text-2xl font-bold mb-2">{email.subject}</h2>
@@ -11,15 +13,23 @@ export default function EmailDetail({ email }: Props) {
         From: {email.sender}
       </p>
 
-      {email.email_insight && (
-        <div className="mb-4 p-3 border rounded bg-gray-50">
+      {insight && (
+        <div className="mb-4 p-4 border rounded bg-gray-50">
           <p>
-            <strong>Category:</strong>{" "}
-            {email.email_insight.category}
+            <strong>Category:</strong> {insight.category}
           </p>
           <p>
             <strong>Confidence:</strong>{" "}
-            {(email.email_insight.confidence * 100).toFixed(0)}%
+            {(insight.confidence * 100).toFixed(0)}%
+          </p>
+          <p>
+            <strong>Priority Score:</strong>{" "}
+            <span className="font-bold">
+              {insight.priority_score}
+            </span>
+          </p>
+          <p>
+            <strong>Reason:</strong> {insight.priority_reason}
           </p>
         </div>
       )}

@@ -4,22 +4,39 @@ type Props = {
 };
 
 export default function EmailListItem({ email, onClick }: Props) {
+  const score = email.email_insight?.priority_score || 0;
   const categoryColor = getCategoryColor(email.email_insight?.category);
 
   return (
     <div
       onClick={onClick}
-      className="p-4 border-b cursor-pointer hover:bg-gray-100"
+      className={`p-4 border-b cursor-pointer hover:bg-gray-100
+        ${score >= 80 ? "bg-red-50 border-l-4 border-red-500" : ""}
+      `}
     >
       <div className="flex justify-between items-center">
         <p className="font-medium">{email.sender}</p>
-        {email.email_insight && (
+
+        <div className="flex gap-2 items-center">
+          {email.email_insight && (
+            <span className={`text-xs px-2 py-1 rounded ${categoryColor}`}>
+              {email.email_insight.category}
+            </span>
+          )}
+
+          {/* 🔥 Priority Badge */}
           <span
-            className={`text-xs px-2 py-1 rounded ${categoryColor}`}
+            className={`text-xs px-2 py-1 rounded ${
+              score >= 80
+                ? "bg-red-500 text-white"
+                : score >= 50
+                ? "bg-yellow-400"
+                : "bg-gray-300"
+            }`}
           >
-            {email.email_insight.category}
+            {score}
           </span>
-        )}
+        </div>
       </div>
 
       <p className="text-sm font-semibold truncate">{email.subject}</p>
