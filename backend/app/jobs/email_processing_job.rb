@@ -14,11 +14,19 @@ class EmailProcessingJob < ApplicationJob
 
     return unless result
 
-    EmailInsight.create!(
+    insight = EmailInsight.create!(
       email: email,
       category: result["category"],
       confidence: result["confidence"],
       reasoning: result["reasoning"]
+    )
+
+    # 🔥 Priority scoring
+    priority = Ai::PriorityScoringService.new(email, insight).call
+
+    insight.update!(
+      priority_score: priority[:score],
+      priority_reason: priority[:reason]
     )
   rescue => e
     Rails.logger.error("EmailProcessingJob failed: #{e.message}")
