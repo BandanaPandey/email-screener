@@ -9,8 +9,9 @@ module Ai
       prompt = build_prompt
 
       raw_response = @client.chat(prompt)
-
-      parse_response(raw_response)
+      
+      parse_ai_response(raw_response)
+      
     rescue => e
       puts("AI Classification failed: #{e.message}")
       Rails.logger.error("AI Classification failed: #{e.message}")
@@ -56,11 +57,26 @@ module Ai
       # PROMPT
     end
 
-    def parse_response(content)
-      JSON.parse(content)
-    rescue => e
-      puts("Failed to parse AI response: #{e.message}")
-      nil
+    def parse_ai_response(raw_response)
+      return nil if raw_response.blank?
+
+      # 🔥 Extract JSON block using regex
+      json_match = raw_response.match(/\{.*\}/m)
+
+      unless json_match
+        Rails.logger.error("No JSON found in AI response: #{raw_response}")
+        return nil
+      end
+
+      json_string = json_match[0]
+
+      begin
+        JSON.parse(json_string)
+      rescue JSON::ParserError => e
+        Rails.logger.error("JSON parse failed: #{e.message}")
+        Rails.logger.error("Raw JSON string: #{json_string}")
+        nil
+      end
     end
 
     def truncate_body(text, max_chars = 1000)

@@ -8,6 +8,7 @@ class EmailProcessingJob < ApplicationJob
 
     return unless should_process?(email) # avoid reprocessing
 
+    # 1. Classification
     result = Ai::ClassificationService.new(email).call
 
     puts "Classification result for email ID #{email_id}: #{result.inspect}"
@@ -21,13 +22,29 @@ class EmailProcessingJob < ApplicationJob
       reasoning: result["reasoning"]
     )
 
-    # 🔥 Priority scoring
+    # 2. Priority
     priority = Ai::PriorityScoringService.new(email, insight).call
 
-    insight.update!(
-      priority_score: priority[:score],
-      priority_reason: priority[:reason]
-    )
+    if priority
+      insight.update!(
+        priority_score: priority[:score],
+        priority_reason: priority[:reason]
+      )
+    end
+
+    #return if insight.priority_score < 50
+
+    # 🔥 3. Summarization
+    summary = Ai::SummarizationService.new(email).call
+
+    puts "Summarization result for email ID #{email_id}: #{summary.inspect}"
+
+    if summary
+      insight.update!(
+        summary: summary
+        #key_points: summary["key_points"].join("\n")
+      )
+    end
   rescue => e
     Rails.logger.error("EmailProcessingJob failed: #{e.message}")
   end

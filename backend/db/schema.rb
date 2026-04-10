@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_04_09_042925) do
+ActiveRecord::Schema[8.1].define(version: 2026_04_10_024928) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
 
@@ -31,9 +31,11 @@ ActiveRecord::Schema[8.1].define(version: 2026_04_09_042925) do
     t.float "confidence"
     t.datetime "created_at", null: false
     t.bigint "email_id", null: false
+    t.text "key_points"
     t.text "priority_reason"
     t.integer "priority_score"
     t.text "reasoning"
+    t.text "summary"
     t.datetime "updated_at", null: false
     t.index ["email_id"], name: "index_email_insights_on_email_id"
   end
