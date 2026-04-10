@@ -15,6 +15,8 @@ type Email = {
     confidence: number;
     priority_score: number;
     priority_reason: string;
+    summary?: string;
+    key_points?: string;
   };
 };
 

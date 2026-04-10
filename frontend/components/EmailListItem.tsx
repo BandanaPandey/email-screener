@@ -42,7 +42,7 @@ export default function EmailListItem({ email, onClick }: Props) {
       <p className="text-sm font-semibold truncate">{email.subject}</p>
 
       <p className="text-xs text-gray-500 truncate">
-        {email.body}
+        {email.email_insight?.summary || email.body}
       </p>
     </div>
   );
