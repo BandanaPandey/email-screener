@@ -45,6 +45,24 @@ class EmailProcessingJob < ApplicationJob
         #key_points: summary["key_points"].join("\n")
       )
     end
+
+    # 🔥 4. Task Extraction
+    tasks_data = Ai::TaskExtractionService.new(email).call
+
+    puts "Task extraction result for email ID #{email_id}: #{tasks_data.inspect}"
+
+    if tasks_data && tasks_data["tasks"].present?
+      tasks_data["tasks"].each do |task|
+        next if task["title"].blank?
+
+        email.tasks.create!(
+          title: task["title"],
+          due_date: task["due_date"],
+          priority: task["priority"] || "medium",
+          status: "pending"
+        )
+      end
+    end
   rescue => e
     Rails.logger.error("EmailProcessingJob failed: #{e.message}")
   end

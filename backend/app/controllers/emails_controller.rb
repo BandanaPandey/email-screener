@@ -4,7 +4,7 @@ class EmailsController < ApplicationController
   def index
     emails = @user.emails.includes(:email_insight).order(received_at: :desc).limit(50)
 
-    render json: emails.as_json(include: :email_insight)
+    render json: emails.as_json(include: [:email_insight, :tasks])
   end
 
   def sync
