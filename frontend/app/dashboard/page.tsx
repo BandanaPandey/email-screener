@@ -4,12 +4,21 @@ import { useEffect, useState } from "react";
 import EmailListItem from "@/components/EmailListItem";
 import EmailDetail from "@/components/EmailDetail";
 
+type Task = {
+  id: number;
+  title: string;
+  due_date?: string;
+  priority: "low" | "medium" | "high";
+  status: "pending" | "completed";
+};
+
 type Email = {
   id: number;
   subject: string;
   sender: string;
   body: string;
   received_at: string;
+  tasks?: Task[];
   email_insight?: {
     category: string;
     confidence: number;

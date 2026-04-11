@@ -1,8 +1,36 @@
+"use client";
+
+import { useState } from "react";
+
 type Props = {
   email: any;
 };
 
 export default function EmailDetail({ email }: Props) {
+  const [tasks, setTasks] = useState(email.tasks || []);
+
+  const toggleTask = async (taskId: number, currentStatus: string) => {
+    const newStatus = currentStatus === "completed" ? "pending" : "completed";
+
+    // 🔥 Optimistic UI
+    setTasks((prev: any[]) =>
+      prev.map((t) =>
+        t.id === taskId ? { ...t, status: newStatus } : t
+      )
+    );
+
+    try {
+      await fetch(`http://localhost:3000/tasks/${taskId}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        credentials: "include",
+        body: JSON.stringify({ status: newStatus }),
+      });
+    } catch (err) {
+      console.error("Failed to update task", err);
+    }
+  };
+
   const insight = email.email_insight;
 
   return (
@@ -15,7 +43,7 @@ export default function EmailDetail({ email }: Props) {
         From: {email.sender}
       </p>
 
-      {/* 🔥 TL;DR */}
+      {/* 🔥 SUMMARY */}
       {insight?.summary && (
         <div className="mb-4 p-4 border rounded bg-blue-50">
           <h3 className="font-semibold mb-1">TL;DR</h3>
@@ -23,33 +51,73 @@ export default function EmailDetail({ email }: Props) {
         </div>
       )}
 
-      {/* 🔥 KEY POINTS */}
-      {insight?.key_points && (
-        <div className="mb-4 p-4 border rounded bg-gray-50">
-          <h3 className="font-semibold mb-1">Key Points</h3>
-          <ul className="list-disc ml-5">
-            {insight.key_points.split("\n").map((point: string, i: number) => (
-              <li key={i}>{point}</li>
+      {/* 🔥 TASKS */}
+      {tasks.length > 0 && (
+        <div className="mb-4 p-4 border rounded bg-green-50">
+          <h3 className="font-semibold mb-2">Tasks</h3>
+
+          <ul className="space-y-2">
+            {tasks.map((task: any) => (
+              <li
+                key={task.id}
+                className="flex justify-between items-center bg-white p-2 rounded border"
+              >
+                <div className="flex items-center gap-2">
+                  {/* 🔥 Checkbox */}
+                  <input
+                    type="checkbox"
+                    checked={task.status === "completed"}
+                    onChange={() =>
+                      toggleTask(task.id, task.status)
+                    }
+                  />
+
+                  <div>
+                    <p
+                      className={`font-medium ${
+                        task.status === "completed"
+                          ? "line-through text-gray-400"
+                          : ""
+                      }`}
+                    >
+                      {task.title}
+                    </p>
+
+                    {task.due_date && (
+                      <p className="text-xs text-gray-500">
+                        Due:{" "}
+                        {new Date(task.due_date).toLocaleDateString()}
+                      </p>
+                    )}
+                  </div>
+                </div>
+
+                {/* 🔥 Priority Badge */}
+                <span
+                  className={`text-xs px-2 py-1 rounded ${
+                    task.priority === "high"
+                      ? "bg-red-500 text-white"
+                      : task.priority === "medium"
+                      ? "bg-yellow-400"
+                      : "bg-gray-300"
+                  }`}
+                >
+                  {task.priority}
+                </span>
+              </li>
             ))}
           </ul>
         </div>
       )}
 
-      {/* 🔥 INSIGHT PANEL */}
+      {/* 🔥 INSIGHTS */}
       {insight && (
         <div className="mb-4 p-4 border rounded bg-gray-100">
           <p>
             <strong>Category:</strong> {insight.category}
           </p>
           <p>
-            <strong>Confidence:</strong>{" "}
-            {(insight.confidence * 100).toFixed(0)}%
-          </p>
-          <p>
             <strong>Priority:</strong> {insight.priority_score}
-          </p>
-          <p>
-            <strong>Reason:</strong> {insight.priority_reason}
           </p>
         </div>
       )}
