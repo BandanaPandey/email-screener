@@ -2,17 +2,14 @@
 
 import { useState } from "react";
 
-type Props = {
-  email: any;
-};
-
-export default function EmailDetail({ email }: Props) {
+export default function EmailDetail({ email }: any) {
   const [tasks, setTasks] = useState(email.tasks || []);
 
-  const toggleTask = async (taskId: number, currentStatus: string) => {
-    const newStatus = currentStatus === "completed" ? "pending" : "completed";
+  const toggleTask = async (taskId: number, status: string) => {
+    const newStatus =
+      status === "completed" ? "pending" : "completed";
 
-    // 🔥 Optimistic UI
+    // Optimistic UI
     setTasks((prev: any[]) =>
       prev.map((t) =>
         t.id === taskId ? { ...t, status: newStatus } : t
@@ -20,14 +17,16 @@ export default function EmailDetail({ email }: Props) {
     );
 
     try {
-      await fetch(`http://localhost:3000/tasks/${taskId}`, {
-        method: "PATCH",
-        headers: { "Content-Type": "application/json" },
-        credentials: "include",
-        body: JSON.stringify({ status: newStatus }),
-      });
+      await fetch(
+        `http://localhost:3000/tasks/${taskId}`,
+        {
+          method: "PATCH",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ status: newStatus }),
+        }
+      );
     } catch (err) {
-      console.error("Failed to update task", err);
+      console.error("Task update failed", err);
     }
   };
 
@@ -36,24 +35,26 @@ export default function EmailDetail({ email }: Props) {
   return (
     <div>
       {/* SUBJECT */}
-      <h2 className="text-2xl font-bold mb-2">{email.subject}</h2>
+      <h2 className="text-2xl font-bold mb-2">
+        {email.subject}
+      </h2>
 
       {/* META */}
-      <p className="text-sm text-gray-600 mb-4">
+      <p className="text-sm text-gray-500 mb-4">
         From: {email.sender}
       </p>
 
-      {/* 🔥 SUMMARY */}
+      {/* SUMMARY */}
       {insight?.summary && (
-        <div className="mb-4 p-4 border rounded bg-blue-50">
+        <div className="p-4 mb-4 bg-blue-50 rounded border">
           <h3 className="font-semibold mb-1">TL;DR</h3>
           <p>{insight.summary}</p>
         </div>
       )}
 
-      {/* 🔥 TASKS */}
+      {/* TASKS */}
       {tasks.length > 0 && (
-        <div className="mb-4 p-4 border rounded bg-green-50">
+        <div className="p-4 mb-4 bg-green-50 rounded border">
           <h3 className="font-semibold mb-2">Tasks</h3>
 
           <ul className="space-y-2">
@@ -63,7 +64,6 @@ export default function EmailDetail({ email }: Props) {
                 className="flex justify-between items-center bg-white p-2 rounded border"
               >
                 <div className="flex items-center gap-2">
-                  {/* 🔥 Checkbox */}
                   <input
                     type="checkbox"
                     checked={task.status === "completed"}
@@ -86,13 +86,14 @@ export default function EmailDetail({ email }: Props) {
                     {task.due_date && (
                       <p className="text-xs text-gray-500">
                         Due:{" "}
-                        {new Date(task.due_date).toLocaleDateString()}
+                        {new Date(
+                          task.due_date
+                        ).toLocaleDateString()}
                       </p>
                     )}
                   </div>
                 </div>
 
-                {/* 🔥 Priority Badge */}
                 <span
                   className={`text-xs px-2 py-1 rounded ${
                     task.priority === "high"
@@ -110,14 +111,15 @@ export default function EmailDetail({ email }: Props) {
         </div>
       )}
 
-      {/* 🔥 INSIGHTS */}
+      {/* INSIGHTS */}
       {insight && (
-        <div className="mb-4 p-4 border rounded bg-gray-100">
+        <div className="p-4 mb-4 bg-gray-100 rounded border">
           <p>
             <strong>Category:</strong> {insight.category}
           </p>
           <p>
-            <strong>Priority:</strong> {insight.priority_score}
+            <strong>Priority Score:</strong>{" "}
+            {insight.priority_score}
           </p>
         </div>
       )}

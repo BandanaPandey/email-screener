@@ -1,141 +1,158 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import EmailListItem from "@/components/EmailListItem";
+import EmailList from "@/components/EmailListItem";
 import EmailDetail from "@/components/EmailDetail";
 
-type Task = {
-  id: number;
-  title: string;
-  due_date?: string;
-  priority: "low" | "medium" | "high";
-  status: "pending" | "completed";
-};
-
-type Email = {
-  id: number;
-  subject: string;
-  sender: string;
-  body: string;
-  received_at: string;
-  tasks?: Task[];
-  email_insight?: {
-    category: string;
-    confidence: number;
-    priority_score: number;
-    priority_reason: string;
-    summary?: string;
-    key_points?: string;
-  };
-};
+type FilterType =
+  | "all"
+  | "action"
+  | "promotion"
+  | "social"
+  | "job";
 
 export default function DashboardPage() {
-  const [emails, setEmails] = useState<Email[]>([]);
-  const [selectedEmail, setSelectedEmail] = useState<Email | null>(null);
+  const [emails, setEmails] = useState<any[]>([]);
+  const [selectedEmail, setSelectedEmail] = useState<any>(null);
   const [loading, setLoading] = useState(true);
-  const [filter, setFilter] = useState<"all" | "high" | "medium" | "low">("all");
+  const [syncing, setSyncing] = useState(false);
+  const [filter, setFilter] = useState<FilterType>("all");
 
-  useEffect(() => {
-    fetchEmails();
-  }, []);
-
+  // 🔹 FETCH EMAILS
   const fetchEmails = async () => {
     try {
       const res = await fetch("http://localhost:3000/emails");
       const data = await res.json();
       setEmails(data);
     } catch (err) {
-      console.error(err);
+      console.error("Failed to fetch emails", err);
     } finally {
       setLoading(false);
     }
   };
 
-  const triggerSync = async () => {
+  useEffect(() => {
+    fetchEmails();
+  }, []);
+
+  // 🔥 SYNC TRIGGER
+  const handleSync = async () => {
+    setSyncing(true);
+
     try {
       await fetch("http://localhost:3000/sync_emails", {
         method: "POST"
       });
 
-      alert("Sync started 🚀");
-      setTimeout(fetchEmails, 3000);
+      await fetchEmails(); // refresh UI
     } catch (err) {
-      alert("Sync failed ❌");
+      console.error("Sync failed", err);
+    } finally {
+      setSyncing(false);
     }
   };
 
-  // 🔥 Sort by priority
-  const sortedEmails = [...emails].sort(
+  // 🔥 ACTION DETECTION
+  const isActionRequired = (email: any) => {
+    if (email.tasks?.length > 0) return true;
+
+    const summary =
+      email.email_insight?.summary?.toLowerCase() || "";
+
+    return (
+      summary.includes("reply") ||
+      summary.includes("submit") ||
+      summary.includes("complete") ||
+      summary.includes("schedule")
+    );
+  };
+
+  // 🔥 FILTER LOGIC
+  const filteredEmails = emails.filter((email) => {
+    const category = email.email_insight?.category;
+
+    switch (filter) {
+      case "action":
+        return isActionRequired(email);
+
+      case "promotion":
+        return category === "promotion";
+
+      case "social":
+        return category === "social";
+
+      case "job":
+        return category === "job";
+
+      default:
+        return true;
+    }
+  });
+
+  // 🔥 SORT BY PRIORITY
+  const sortedEmails = [...filteredEmails].sort(
     (a, b) =>
       (b.email_insight?.priority_score || 0) -
       (a.email_insight?.priority_score || 0)
   );
 
-  // 🔥 Apply filter
-  const filteredEmails = sortedEmails.filter((email) => {
-    const score = email.email_insight?.priority_score || 0;
-
-    if (filter === "high") return score >= 80;
-    if (filter === "medium") return score >= 50 && score < 80;
-    if (filter === "low") return score < 50;
-
-    return true;
-  });
+  if (loading) return <p className="p-4">Loading...</p>;
 
   return (
-    <div className="flex h-screen">
+    <div className="grid grid-cols-3 h-screen">
       {/* LEFT PANEL */}
-      <div className="w-1/3 border-r overflow-y-auto">
-        <div className="p-4 flex flex-col gap-2">
-          <div className="flex justify-between items-center">
-            <h2 className="text-xl font-semibold">Inbox</h2>
-            <button
-              onClick={triggerSync}
-              className="bg-blue-500 text-white px-3 py-1 rounded"
-            >
-              Sync
-            </button>
-          </div>
+      <div className="col-span-1 border-r p-4 bg-gray-50 overflow-y-auto">
+        {/* HEADER */}
+        <div className="flex justify-between items-center mb-4">
+          <h1 className="text-xl font-bold">Smart Inbox</h1>
 
-          {/* 🔥 Filters */}
-          <div className="flex gap-2 mt-2">
-            {["all", "high", "medium", "low"].map((f) => (
-              <button
-                key={f}
-                onClick={() => setFilter(f as any)}
-                className={`px-2 py-1 text-sm rounded ${
-                  filter === f
-                    ? "bg-black text-white"
-                    : "bg-gray-200"
-                }`}
-              >
-                {f}
-              </button>
-            ))}
-          </div>
+          {/* 🔥 SYNC BUTTON */}
+          <button
+            onClick={handleSync}
+            className="text-sm bg-black text-white px-3 py-1 rounded"
+          >
+            {syncing ? "Syncing..." : "Sync"}
+          </button>
         </div>
 
-        {loading ? (
-          <p className="p-4">Loading...</p>
-        ) : filteredEmails.length === 0 ? (
-          <p className="p-4">No emails</p>
-        ) : (
-          filteredEmails.map((email) => (
-            <EmailListItem
-              key={email.id}
-              email={email}
-              onClick={() => setSelectedEmail(email)}
-            />
-          ))
-        )}
+        {/* 🔥 FILTER TABS */}
+        <div className="flex gap-2 mb-4 flex-wrap">
+          {[
+            { key: "all", label: "All" },
+            { key: "action", label: "⚡ Action" },
+            { key: "promotion", label: "Promo" },
+            { key: "social", label: "Social" },
+            { key: "job", label: "Jobs" },
+          ].map((f) => (
+            <button
+              key={f.key}
+              onClick={() => setFilter(f.key as FilterType)}
+              className={`px-3 py-1 text-sm rounded ${
+                filter === f.key
+                  ? "bg-black text-white"
+                  : "bg-gray-200"
+              }`}
+            >
+              {f.label}
+            </button>
+          ))}
+        </div>
+
+        {/* EMAIL LIST */}
+        <EmailList
+          emails={sortedEmails}
+          onSelect={setSelectedEmail}
+        />
       </div>
 
       {/* RIGHT PANEL */}
-      <div className="flex-1 p-6 overflow-y-auto">
+      <div className="col-span-2 p-6 overflow-y-auto">
         {selectedEmail ? (
           <EmailDetail email={selectedEmail} />
         ) : (
-          <p>Select an email</p>
+          <p className="text-gray-500">
+            Select an email to view details
+          </p>
         )}
       </div>
     </div>

@@ -1,66 +1,94 @@
+"use client";
+
 type Props = {
-  email: any;
-  onClick: () => void;
+  emails: any[];
+  onSelect: (email: any) => void;
 };
 
-export default function EmailListItem({ email, onClick }: Props) {
-  const score = email.email_insight?.priority_score || 0;
-  const categoryColor = getCategoryColor(email.email_insight?.category);
+export default function EmailList({ emails, onSelect }: Props) {
+  const getPriorityLabel = (score: number) => {
+    if (score > 0.75)
+      return { label: "🔥 High", color: "bg-red-500 text-white" };
+    if (score > 0.4)
+      return { label: "⚡ Medium", color: "bg-yellow-400" };
+    return { label: "🧊 Low", color: "bg-gray-300" };
+  };
+
+  const isActionRequired = (email: any) => {
+    if (email.tasks?.length > 0) return true;
+
+    const summary =
+      email.email_insight?.summary?.toLowerCase() || "";
+
+    return (
+      summary.includes("reply") ||
+      summary.includes("submit") ||
+      summary.includes("complete") ||
+      summary.includes("schedule")
+    );
+  };
 
   return (
-    <div
-      onClick={onClick}
-      className={`p-4 border-b cursor-pointer hover:bg-gray-100
-        ${score >= 80 ? "bg-red-50 border-l-4 border-red-500" : ""}
-      `}
-    >
-      <div className="flex justify-between items-center">
-        <p className="font-medium">{email.sender}</p>
+    <div className="space-y-3">
+      {emails.map((email) => {
+        const insight = email.email_insight;
+        const priority = getPriorityLabel(
+          insight?.priority_score || 0
+        );
 
-        <div className="flex gap-2 items-center">
-          {email.email_insight && (
-            <span className={`text-xs px-2 py-1 rounded ${categoryColor}`}>
-              {email.email_insight.category}
-            </span>
-          )}
-
-          {/* 🔥 Priority Badge */}
-          <span
-            className={`text-xs px-2 py-1 rounded ${
-              score >= 80
-                ? "bg-red-500 text-white"
-                : score >= 50
-                ? "bg-yellow-400"
-                : "bg-gray-300"
-            }`}
+        return (
+          <div
+            key={email.id}
+            onClick={() => onSelect(email)}
+            className={`p-4 rounded-xl cursor-pointer transition border
+              hover:shadow-md
+              ${
+                isActionRequired(email)
+                  ? "border-red-400 bg-red-50"
+                  : "bg-white"
+              }
+            `}
           >
-            {score}
-          </span>
-        </div>
-      </div>
+            {/* TOP ROW */}
+            <div className="flex justify-between items-center mb-1">
+              <span
+                className={`text-xs px-2 py-1 rounded ${priority.color}`}
+              >
+                {priority.label}
+              </span>
 
-      <p className="text-sm font-semibold truncate">{email.subject}</p>
+              <span className="text-xs text-gray-500">
+                {new Date(
+                  email.received_at
+                ).toLocaleDateString()}
+              </span>
+            </div>
 
-      <p className="text-xs text-gray-500 truncate">
-        {email.email_insight?.summary || email.body}
-      </p>
+            {/* SUBJECT */}
+            <h3 className="font-semibold text-lg">
+              {email.subject}
+            </h3>
+
+            {/* SUMMARY */}
+            {insight?.summary && (
+              <p className="text-sm text-gray-600 line-clamp-2 mt-1">
+                {insight.summary}
+              </p>
+            )}
+
+            {/* META */}
+            <div className="flex justify-between mt-2 text-xs text-gray-500">
+              <span>{email.sender}</span>
+
+              {insight?.category && (
+                <span className="capitalize bg-gray-200 px-2 py-0.5 rounded">
+                  {insight.category}
+                </span>
+              )}
+            </div>
+          </div>
+        );
+      })}
     </div>
   );
-}
-
-function getCategoryColor(category?: string) {
-  switch (category) {
-    case "important":
-      return "bg-red-100 text-red-600";
-    case "action_required":
-      return "bg-yellow-100 text-yellow-700";
-    case "promotion":
-      return "bg-blue-100 text-blue-600";
-    case "social":
-      return "bg-purple-100 text-purple-600";
-    case "spam":
-      return "bg-gray-200 text-gray-600";
-    default:
-      return "bg-gray-100 text-gray-500";
-  }
 }
