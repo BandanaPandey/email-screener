@@ -3,6 +3,8 @@
 import { useEffect, useState } from "react";
 import EmailList from "@/components/EmailListItem";
 import EmailDetail from "@/components/EmailDetail";
+import useNotifications from "@/hooks/useNotifications";
+import NotificationBanner from "@/components/NotificationBanner";
 
 type FilterType =
   | "all"
@@ -18,14 +20,30 @@ export default function DashboardPage() {
   const [syncing, setSyncing] = useState(false);
   const [filter, setFilter] = useState<FilterType>("all");
 
-  // 🔹 FETCH EMAILS
+  // 🔔 Notifications
+  const notifications = useNotifications(emails);
+
+  // 🔐 Request browser notification permission
+  useEffect(() => {
+    if ("Notification" in window) {
+      Notification.requestPermission();
+    }
+  }, []);
+
+  // 🔄 Fetch Emails
   const fetchEmails = async () => {
     try {
       const res = await fetch("http://localhost:3000/emails");
+
+      if (!res.ok) throw new Error("Failed API");
+
       const data = await res.json();
-      setEmails(data);
+
+      // ✅ Safe handling
+      setEmails(Array.isArray(data) ? data : data.emails || []);
     } catch (err) {
-      console.error("Failed to fetch emails", err);
+      console.error("Fetch failed", err);
+      setEmails([]);
     } finally {
       setLoading(false);
     }
@@ -35,7 +53,16 @@ export default function DashboardPage() {
     fetchEmails();
   }, []);
 
-  // 🔥 SYNC TRIGGER
+  // 🔁 Auto polling every 30 sec
+  useEffect(() => {
+    const interval = setInterval(() => {
+      fetchEmails();
+    }, 30000);
+
+    return () => clearInterval(interval);
+  }, []);
+
+  // 🔥 Sync Trigger
   const handleSync = async () => {
     setSyncing(true);
 
@@ -44,7 +71,7 @@ export default function DashboardPage() {
         method: "POST"
       });
 
-      await fetchEmails(); // refresh UI
+      await fetchEmails();
     } catch (err) {
       console.error("Sync failed", err);
     } finally {
@@ -52,7 +79,7 @@ export default function DashboardPage() {
     }
   };
 
-  // 🔥 ACTION DETECTION
+  // 🔥 Detect action-required emails
   const isActionRequired = (email: any) => {
     if (email.tasks?.length > 0) return true;
 
@@ -67,34 +94,45 @@ export default function DashboardPage() {
     );
   };
 
-  // 🔥 FILTER LOGIC
+  // 🔥 Filtering
   const filteredEmails = emails.filter((email) => {
     const category = email.email_insight?.category;
 
     switch (filter) {
       case "action":
         return isActionRequired(email);
-
       case "promotion":
         return category === "promotion";
-
       case "social":
         return category === "social";
-
       case "job":
         return category === "job";
-
       default:
         return true;
     }
   });
 
-  // 🔥 SORT BY PRIORITY
+  // 🔥 Sorting by priority
+ // 🔥 SORT BY PRIORITY
   const sortedEmails = [...filteredEmails].sort(
     (a, b) =>
       (b.email_insight?.priority_score || 0) -
       (a.email_insight?.priority_score || 0)
   );
+
+  // 🔔 Browser Notifications
+  useEffect(() => {
+    if (!("Notification" in window)) return;
+    if (Notification.permission !== "granted") return;
+
+    sortedEmails.forEach((email) => {
+      if (email.email_insight?.priority_score > 85) {
+        new Notification("🔥 High Priority Email", {
+          body: email.subject,
+        });
+      }
+    });
+  }, [sortedEmails]);
 
   if (loading) return <p className="p-4">Loading...</p>;
 
@@ -106,7 +144,6 @@ export default function DashboardPage() {
         <div className="flex justify-between items-center mb-4">
           <h1 className="text-xl font-bold">Smart Inbox</h1>
 
-          {/* 🔥 SYNC BUTTON */}
           <button
             onClick={handleSync}
             className="text-sm bg-black text-white px-3 py-1 rounded"
@@ -115,7 +152,10 @@ export default function DashboardPage() {
           </button>
         </div>
 
-        {/* 🔥 FILTER TABS */}
+        {/* 🔔 Notifications */}
+        <NotificationBanner notifications={notifications} />
+
+        {/* 🔥 FILTERS */}
         <div className="flex gap-2 mb-4 flex-wrap">
           {[
             { key: "all", label: "All" },
@@ -138,7 +178,7 @@ export default function DashboardPage() {
           ))}
         </div>
 
-        {/* EMAIL LIST */}
+        {/* 📩 EMAIL LIST */}
         <EmailList
           emails={sortedEmails}
           onSelect={setSelectedEmail}
