@@ -11,7 +11,9 @@ export default function TasksPage() {
 
   const fetchTasks = async () => {
     try {
-      const res = await fetch("http://localhost:3000/tasks");
+      const res = await fetch("http://localhost:3000/tasks", {
+        credentials: "include", // Important for session cookies
+      });
       const data = await res.json();
       setTasks(Array.isArray(data) ? data : []);
     } catch (err) {

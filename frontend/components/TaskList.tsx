@@ -9,6 +9,7 @@ export default function TaskList({ tasks, refresh }: any) {
       await fetch(`http://localhost:3000/tasks/${task.id}`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
+        credentials: "include",
         body: JSON.stringify({
           task: { status: newStatus },
         }),

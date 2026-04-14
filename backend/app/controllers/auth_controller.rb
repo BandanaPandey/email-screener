@@ -13,6 +13,8 @@ class AuthController < ApplicationController
       user.save!
     end
 
+    session[:user_id] = user.id   # ✅ THIS IS CRITICAL
+
     account = user.connected_accounts.find_or_initialize_by(provider: 'google')
 
     account.update!(

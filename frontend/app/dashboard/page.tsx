@@ -34,7 +34,9 @@ export default function DashboardPage() {
   // 🔄 Fetch Emails
   const fetchEmails = async () => {
     try {
-      const res = await fetch("http://localhost:3000/emails");
+      const res = await fetch("http://localhost:3000/emails", {
+        credentials: "include",
+      });
 
       if (!res.ok) throw new Error("Failed API");
 
@@ -68,7 +70,8 @@ export default function DashboardPage() {
 
     try {
       await fetch("http://localhost:3000/sync_emails", {
-        method: "POST"
+        method: "POST",
+        credentials: "include"
       });
 
       await fetchEmails();
