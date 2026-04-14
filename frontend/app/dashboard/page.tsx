@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import Link from "next/link";
 import EmailList from "@/components/EmailListItem";
 import EmailDetail from "@/components/EmailDetail";
 import useNotifications from "@/hooks/useNotifications";
@@ -39,7 +40,6 @@ export default function DashboardPage() {
 
       const data = await res.json();
 
-      // ✅ Safe handling
       setEmails(Array.isArray(data) ? data : data.emails || []);
     } catch (err) {
       console.error("Fetch failed", err);
@@ -53,7 +53,7 @@ export default function DashboardPage() {
     fetchEmails();
   }, []);
 
-  // 🔁 Auto polling every 30 sec
+  // 🔁 Auto polling
   useEffect(() => {
     const interval = setInterval(() => {
       fetchEmails();
@@ -112,27 +112,41 @@ export default function DashboardPage() {
     }
   });
 
-  // 🔥 Sorting by priority
- // 🔥 SORT BY PRIORITY
-  const sortedEmails = [...filteredEmails].sort(
-    (a, b) =>
-      (b.email_insight?.priority_score || 0) -
-      (a.email_insight?.priority_score || 0)
-  );
+  // 🔥 Sorting
+  const sortedEmails = Array.isArray(filteredEmails)
+    ? [...filteredEmails].sort(
+        (a, b) =>
+          (b.email_insight?.priority_score || 0) -
+          (a.email_insight?.priority_score || 0)
+      )
+    : [];
 
-  // 🔔 Browser Notifications
+  // 🔔 Prevent duplicate notifications
+  const [notifiedIds, setNotifiedIds] = useState<Set<number>>(new Set());
+
   useEffect(() => {
     if (!("Notification" in window)) return;
     if (Notification.permission !== "granted") return;
 
     sortedEmails.forEach((email) => {
-      if (email.email_insight?.priority_score > 85) {
+      if (
+        email.email_insight?.priority_score > 85 &&
+        !notifiedIds.has(email.id)
+      ) {
         new Notification("🔥 High Priority Email", {
           body: email.subject,
         });
+
+        setNotifiedIds((prev) => new Set(prev).add(email.id));
       }
     });
   }, [sortedEmails]);
+
+  // 🔢 Task count
+  const totalTasks = emails.reduce(
+    (acc, email) => acc + (email.tasks?.length || 0),
+    0
+  );
 
   if (loading) return <p className="p-4">Loading...</p>;
 
@@ -141,16 +155,32 @@ export default function DashboardPage() {
       {/* LEFT PANEL */}
       <div className="col-span-1 border-r p-4 bg-gray-50 overflow-y-auto">
         {/* HEADER */}
-        <div className="flex justify-between items-center mb-4">
+        <div className="flex justify-between items-center mb-2">
           <h1 className="text-xl font-bold">Smart Inbox</h1>
 
-          <button
-            onClick={handleSync}
-            className="text-sm bg-black text-white px-3 py-1 rounded"
-          >
-            {syncing ? "Syncing..." : "Sync"}
-          </button>
+          <div className="flex gap-2">
+            {/* 🔄 Sync */}
+            <button
+              onClick={handleSync}
+              className="text-sm bg-black text-white px-3 py-1 rounded"
+            >
+              {syncing ? "Syncing..." : "Sync"}
+            </button>
+
+            {/* 📌 View Tasks */}
+            <Link
+              href="/tasks"
+              className="text-sm bg-gray-800 text-white px-3 py-1 rounded"
+            >
+              Tasks
+            </Link>
+          </div>
         </div>
+
+        {/* 🔢 Task count */}
+        <p className="text-xs text-gray-500 mb-3">
+          {totalTasks} tasks across emails
+        </p>
 
         {/* 🔔 Notifications */}
         <NotificationBanner notifications={notifications} />
