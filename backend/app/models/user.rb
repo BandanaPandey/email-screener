@@ -6,6 +6,7 @@ class User < ApplicationRecord
 
   has_many :connected_accounts, dependent: :destroy
   has_many :emails, dependent: :destroy
+  has_many :tasks, through: :emails, dependent: :destroy
 
   # ✅ Allow OAuth users without password
   def password_required?
