@@ -16,6 +16,7 @@ Rails.application.routes.draw do
   resources :emails, only: [:index]
   post '/sync_emails', to: 'emails#sync'
   resources :tasks, only: [:index, :update]
+  resources :rules, only: [:index, :create, :destroy]
 
   # Defines the root path route ("/")
   # root "posts#index"

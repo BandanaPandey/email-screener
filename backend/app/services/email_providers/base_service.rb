@@ -26,8 +26,8 @@ module EmailProviders
       )
 
       # 🔥 Trigger async classification
-      #EmailProcessingJob.perform_later(email.id)
-      EmailProcessingJob.perform_now(email.id)
+      #EmailProcessingJob.perform_later(@user.id, email.id)
+      EmailProcessingJob.perform_now(@user.id, email.id)
     end
   end
 end

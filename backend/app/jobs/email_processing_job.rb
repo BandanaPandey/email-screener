@@ -1,8 +1,11 @@
 class EmailProcessingJob < ApplicationJob
   queue_as :default
 
-  def perform(email_id)
+  def perform(user_id, email_id)
     puts "Processing email ID: #{email_id}"
+
+    user = User.find_by(id: user_id)
+    return unless user
     email = Email.find_by(id: email_id)
     return unless email
 
@@ -63,6 +66,9 @@ class EmailProcessingJob < ApplicationJob
         )
       end
     end
+
+    # 🔥 Step 4: Apply Rules (AFTER AI)
+    RuleEngineService.new(email, user).apply!
   rescue => e
     Rails.logger.error("EmailProcessingJob failed: #{e.message}")
   end
