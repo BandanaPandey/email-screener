@@ -12,7 +12,7 @@ module Ai
       #parse_response(raw)
       parse_ai_response(raw)
     rescue => e
-      Rails.logger.error("Task extraction failed: #{e.message}")
+      Rails.logger.error("Task extraction failed for #{@email.id}: #{e.message}")
       nil
     end
 

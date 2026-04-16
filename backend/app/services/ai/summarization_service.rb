@@ -11,7 +11,7 @@ module Ai
 
       parse_summary_response(raw)
     rescue => e
-      Rails.logger.error("Summarization failed: #{e.message}")
+      Rails.logger.error("Summarization failed for #{@email.id}: #{e.message}")
       nil
     end
 

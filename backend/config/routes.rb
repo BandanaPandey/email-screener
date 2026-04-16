@@ -18,6 +18,10 @@ Rails.application.routes.draw do
   resources :tasks, only: [:index, :update]
   resources :rules, only: [:index, :create, :destroy]
 
+  post "/ai/reply", to: "ai#reply_suggestion"
+  post "/ai/summarize", to: "ai#summarize_thread"
+  post "/ai/extract_tasks", to: "ai#extract_tasks"
+
   # Defines the root path route ("/")
   # root "posts#index"
 end
