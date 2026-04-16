@@ -4,12 +4,15 @@ import { useState } from "react";
 
 export default function EmailDetail({ email }: any) {
   const [tasks, setTasks] = useState(email.tasks || []);
+  const [reply, setReply] = useState("");
+  const [summary, setSummary] = useState("");
+  const [loading, setLoading] = useState<string | null>(null);
+  const [error, setError] = useState("");
 
   const toggleTask = async (taskId: number, status: string) => {
-    const newStatus =
-      status === "completed" ? "pending" : "completed";
+    const newStatus = status === "completed" ? "pending" : "completed";
 
-    // Optimistic UI
+    // ✅ Optimistic UI
     setTasks((prev: any[]) =>
       prev.map((t) =>
         t.id === taskId ? { ...t, status: newStatus } : t
@@ -17,17 +20,53 @@ export default function EmailDetail({ email }: any) {
     );
 
     try {
-      await fetch(
-        `http://localhost:3000/tasks/${taskId}`,
-        {
-          method: "PATCH",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ status: newStatus }),
-          credentials: "include"
-        }
-      );
+      await fetch(`http://localhost:3000/tasks/${taskId}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ status: newStatus }),
+        credentials: "include",
+      });
     } catch (err) {
       console.error("Task update failed", err);
+    }
+  };
+
+  const callAI = async (type: string) => {
+    setLoading(type);
+    setError("");
+
+    try {
+      const res = await fetch(`http://localhost:3000/ai/${type}`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        credentials: "include",
+        body: JSON.stringify({ email_id: email.id }),
+      });
+
+      if (!res.ok) throw new Error("AI request failed");
+
+      const data = await res.json();
+
+      // ✅ Handle all AI responses
+      if (type === "reply") {
+        setReply(data.reply || "");
+      }
+
+      if (type === "summarize") {
+        setSummary(data.summary || "");
+      }
+
+      if (type === "extract_tasks") {
+        // ✅ Update tasks dynamically
+        if (Array.isArray(data.tasks)) {
+          setTasks(data.tasks);
+        }
+      }
+    } catch (err) {
+      console.error("AI error", err);
+      setError("Something went wrong. Try again.");
+    } finally {
+      setLoading(null);
     }
   };
 
@@ -36,20 +75,33 @@ export default function EmailDetail({ email }: any) {
   return (
     <div>
       {/* SUBJECT */}
-      <h2 className="text-2xl font-bold mb-2">
-        {email.subject}
-      </h2>
+      <h2 className="text-2xl font-bold mb-2">{email.subject}</h2>
 
       {/* META */}
       <p className="text-sm text-gray-500 mb-4">
         From: {email.sender}
       </p>
 
-      {/* SUMMARY */}
-      {insight?.summary && (
+      {/* ERROR */}
+      {error && (
+        <div className="mb-3 p-2 bg-red-100 text-red-600 rounded">
+          {error}
+        </div>
+      )}
+
+      {/* EXISTING SUMMARY */}
+      {insight?.summary && !summary && (
         <div className="p-4 mb-4 bg-blue-50 rounded border">
           <h3 className="font-semibold mb-1">TL;DR</h3>
           <p>{insight.summary}</p>
+        </div>
+      )}
+
+      {/* AI SUMMARY */}
+      {summary && (
+        <div className="p-4 mb-4 bg-indigo-50 rounded border">
+          <h3 className="font-semibold mb-1">AI Summary</h3>
+          <p>{summary}</p>
         </div>
       )}
 
@@ -87,9 +139,7 @@ export default function EmailDetail({ email }: any) {
                     {task.due_date && (
                       <p className="text-xs text-gray-500">
                         Due:{" "}
-                        {new Date(
-                          task.due_date
-                        ).toLocaleDateString()}
+                        {new Date(task.due_date).toLocaleDateString()}
                       </p>
                     )}
                   </div>
@@ -122,6 +172,46 @@ export default function EmailDetail({ email }: any) {
             <strong>Priority Score:</strong>{" "}
             {insight.priority_score}
           </p>
+        </div>
+      )}
+
+      {/* 🤖 AI ACTIONS */}
+      <div className="flex gap-2 mb-4 flex-wrap">
+        <button
+          onClick={() => callAI("reply")}
+          disabled={loading !== null}
+          className="bg-blue-600 text-white px-3 py-1 rounded disabled:opacity-50"
+        >
+          {loading === "reply" ? "Thinking..." : "✨ Reply"}
+        </button>
+
+        <button
+          onClick={() => callAI("summarize")}
+          disabled={loading !== null}
+          className="bg-green-600 text-white px-3 py-1 rounded disabled:opacity-50"
+        >
+          {loading === "summarize" ? "Summarizing..." : "🧠 Summarize"}
+        </button>
+
+        <button
+          onClick={() => callAI("extract_tasks")}
+          disabled={loading !== null}
+          className="bg-purple-600 text-white px-3 py-1 rounded disabled:opacity-50"
+        >
+          {loading === "extract_tasks" ? "Extracting..." : "📌 Extract Tasks"}
+        </button>
+      </div>
+
+      {/* REPLY */}
+      {reply && (
+        <div className="p-3 mb-4 bg-blue-50 rounded">
+          <h3 className="font-semibold mb-1">Reply Suggestion</h3>
+          <textarea
+            value={reply}
+            onChange={(e) => setReply(e.target.value)}
+            className="w-full border p-2 rounded"
+            rows={6}
+          />
         </div>
       )}
 

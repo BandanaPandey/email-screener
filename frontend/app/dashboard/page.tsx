@@ -55,14 +55,14 @@ export default function DashboardPage() {
     fetchEmails();
   }, []);
 
-  // 🔁 Auto polling
-  useEffect(() => {
-    const interval = setInterval(() => {
-      fetchEmails();
-    }, 30000);
+  // // 🔁 Auto polling
+  // useEffect(() => {
+  //   const interval = setInterval(() => {
+  //     fetchEmails();
+  //   }, 30000);
 
-    return () => clearInterval(interval);
-  }, []);
+  //   return () => clearInterval(interval);
+  // }, []);
 
   // 🔥 Sync Trigger
   const handleSync = async () => {
@@ -221,7 +221,7 @@ export default function DashboardPage() {
       {/* RIGHT PANEL */}
       <div className="col-span-2 p-6 overflow-y-auto">
         {selectedEmail ? (
-          <EmailDetail email={selectedEmail} />
+          <EmailDetail key={selectedEmail?.id} email={selectedEmail} />
         ) : (
           <p className="text-gray-500">
             Select an email to view details
