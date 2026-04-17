@@ -4,7 +4,9 @@ class AiController < ApplicationController
   def reply_suggestion
     email = current_user.emails.find(params[:email_id])
 
-    result = Ai::ReplyService.new(email).call
+    tone = params[:tone] || "professional"
+
+    result = Ai::ReplyService.new(email, tone: tone).call
 
     render json: { reply: result }
   end

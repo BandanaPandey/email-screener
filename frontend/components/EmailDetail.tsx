@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 
 export default function EmailDetail({ email }: any) {
   const [tasks, setTasks] = useState(email.tasks || []);
@@ -9,10 +9,22 @@ export default function EmailDetail({ email }: any) {
   const [loading, setLoading] = useState<string | null>(null);
   const [error, setError] = useState("");
 
+  // 🔥 NEW: tone state
+  const [tone, setTone] = useState("professional");
+
+  // ✅ FIX: reset state when email changes
+  useEffect(() => {
+    setReply("");
+    setSummary("");
+    setTasks(email.tasks || []);
+    setError("");
+    setTone("professional"); // reset tone
+  }, [email.id]);
+
   const toggleTask = async (taskId: number, status: string) => {
     const newStatus = status === "completed" ? "pending" : "completed";
 
-    // ✅ Optimistic UI
+    // Optimistic UI
     setTasks((prev: any[]) =>
       prev.map((t) =>
         t.id === taskId ? { ...t, status: newStatus } : t
@@ -40,14 +52,16 @@ export default function EmailDetail({ email }: any) {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         credentials: "include",
-        body: JSON.stringify({ email_id: email.id }),
+        body: JSON.stringify({
+          email_id: email.id,
+          tone: tone, // 🔥 tone passed
+        }),
       });
 
       if (!res.ok) throw new Error("AI request failed");
 
       const data = await res.json();
 
-      // ✅ Handle all AI responses
       if (type === "reply") {
         setReply(data.reply || "");
       }
@@ -57,7 +71,6 @@ export default function EmailDetail({ email }: any) {
       }
 
       if (type === "extract_tasks") {
-        // ✅ Update tasks dynamically
         if (Array.isArray(data.tasks)) {
           setTasks(data.tasks);
         }
@@ -175,6 +188,27 @@ export default function EmailDetail({ email }: any) {
         </div>
       )}
 
+      {/* 🎯 TONE SELECTOR */}
+      <div className="mb-3">
+        <p className="text-xs text-gray-500 mb-1">Reply Tone</p>
+
+        <div className="flex gap-2 flex-wrap">
+          {["casual", "professional", "short", "detailed"].map((t) => (
+            <button
+              key={t}
+              onClick={() => setTone(t)}
+              className={`px-2 py-1 text-sm rounded border ${
+                tone === t
+                  ? "bg-black text-white"
+                  : "bg-gray-100"
+              }`}
+            >
+              {t}
+            </button>
+          ))}
+        </div>
+      </div>
+
       {/* 🤖 AI ACTIONS */}
       <div className="flex gap-2 mb-4 flex-wrap">
         <button
@@ -198,14 +232,18 @@ export default function EmailDetail({ email }: any) {
           disabled={loading !== null}
           className="bg-purple-600 text-white px-3 py-1 rounded disabled:opacity-50"
         >
-          {loading === "extract_tasks" ? "Extracting..." : "📌 Extract Tasks"}
+          {loading === "extract_tasks"
+            ? "Extracting..."
+            : "📌 Extract Tasks"}
         </button>
       </div>
 
-      {/* REPLY */}
+      {/* ✉️ REPLY */}
       {reply && (
         <div className="p-3 mb-4 bg-blue-50 rounded">
-          <h3 className="font-semibold mb-1">Reply Suggestion</h3>
+          <h3 className="font-semibold mb-1">
+            Reply Suggestion ({tone})
+          </h3>
           <textarea
             value={reply}
             onChange={(e) => setReply(e.target.value)}
