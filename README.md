@@ -1,127 +1,321 @@
-# Email Screener App
+# 🚀 AI Smart Inbox (Email Screener)
 
-## Tech Stack
-- Backend: Rails API
-- Frontend: Next.js
-- DB: PostgreSQL
-- Jobs: Sidekiq + Redis
+An intelligent **AI-powered inbox assistant** that helps you **prioritize, summarize, reply, and extract tasks** from emails automatically.
 
-## Setup
+Built using **Ruby on Rails (backend)** + **Next.js (frontend)** with a focus on **productivity, automation, and clean UX**.
 
-### Backend
+---
+
+# ✨ Features
+
+---
+
+## 📥 Email Integration
+
+* Connect with Gmail via OAuth
+* Secure token storage with refresh handling
+* Background email syncing using Sidekiq
+
+---
+
+## 🧠 AI-Powered Email Intelligence
+
+* Automatic **email classification** (important, promotion, etc.)
+* **Priority scoring** (core differentiation)
+* AI-generated **summaries (TL;DR)**
+* Extract actionable **tasks from emails**
+
+---
+
+## 🤖 AI Assistant Actions
+
+* ✨ **Reply Suggestions**
+* 🧠 **Summarize Email**
+* 📌 **Extract Tasks**
+
+---
+
+## 🎯 Smart Reply Tones
+
+Customize how AI responds:
+
+* Casual
+* Professional
+* Short
+* Detailed
+
+---
+
+## 📌 Task Management
+
+* Tasks auto-created from emails
+* Mark as completed/pending
+* Priority tagging (high / medium / low)
+* Due date tracking
+
+---
+
+## 📊 Smart Inbox UI
+
+* Gmail-like layout (Sidebar + List + Detail)
+* Highlight high-priority emails
+* Task visibility inside emails
+* Clean and responsive UI
+
+---
+
+## 🔔 Smart Notifications
+
+* Alerts for high-priority emails
+* Real-time feedback for important actions
+
+---
+
+## ⚙️ Rule Engine
+
+Create custom automation rules:
+
+```
+If sender = boss → mark important  
+If subject contains "invoice" → mark action required  
+```
+
+* Apply rules to new and existing emails
+* Fully user-configurable
+
+---
+
+## ⚡ Scalable Backend
+
+* Background jobs using Sidekiq
+* Provider-agnostic architecture:
+
+  * Email providers (Gmail, future-ready)
+  * AI providers (Ollama, OpenAI, Anthropic)
+
+---
+
+# 🧱 Tech Stack
+
+---
+
+## Backend
+
+* Ruby on Rails (API mode)
+* Sidekiq (background jobs)
+* PostgreSQL
+
+---
+
+## Frontend
+
+* Next.js (App Router)
+* React + Tailwind CSS
+
+---
+
+## AI Layer
+
+* Provider-agnostic abstraction
+* Supports:
+
+  * Ollama (local models)
+  * OpenAI (optional)
+  * Extendable to Anthropic, etc.
+
+---
+
+## Authentication
+
+* Google OAuth (OmniAuth)
+* Session-based authentication
+
+---
+
+# 🧠 Architecture Overview
+
+---
+
+```
+Frontend (Next.js)
+        ↓
+Rails API (Controllers)
+        ↓
+Services Layer
+  - Email Sync
+  - AI Classification
+  - Task Extraction
+  - Rule Engine
+        ↓
+AI Provider Layer (Pluggable)
+        ↓
+Database (PostgreSQL)
+```
+
+---
+
+# 🚀 Getting Started
+
+---
+
+## 1️⃣ Clone the repo
+
+```bash
+git clone <your-repo-url>
+cd ai-smart-inbox
+```
+
+---
+
+## 2️⃣ Backend Setup (Rails)
+
+```bash
 cd backend
 bundle install
 rails db:create db:migrate
-rails s
+```
 
-### Frontend
+---
+
+## 🔐 Setup Environment Variables
+
+```bash
+GOOGLE_CLIENT_ID=your_client_id
+GOOGLE_CLIENT_SECRET=your_secret
+```
+
+---
+
+## ▶️ Start Rails server
+
+```bash
+rails s
+```
+
+Runs on:
+
+```
+http://localhost:3000
+```
+
+---
+
+## ⚙️ Start Sidekiq
+
+```bash
+bundle exec sidekiq
+```
+
+---
+
+## 3️⃣ Frontend Setup (Next.js)
+
+```bash
 cd frontend
 npm install
+```
+
+---
+
+## ▶️ Run frontend
+
+```bash
 npm run dev
+```
 
+Runs on:
 
-### Devlopment Plan
-🧠 1. Core Idea (Refined)
+```
+http://localhost:3001
+```
 
-Your app = “Smart Email Screener”
-→ Automatically analyzes, categorizes, ranks, and summarizes emails so users only see what matters.
+---
 
-Think:
+# 🔗 Key API Endpoints
 
-Priority Inbox on steroids
-AI assistant for email decision-making
-🚀 2. Features (Structured Roadmap)
+---
 
-🔹 Phase 1: MVP (Must-Have)
+## Email
 
-Focus on delivering value quickly.
+```
+GET /emails
+POST /sync_emails
+```
 
-📥 Email Integration
-Connect inbox via:
-Gmail API (primary target)
-Outlook (later)
-OAuth authentication
-🧠 AI Email Classification
-Categories:
-Important
-Action Required
-Promotions
-Spam
-Social
-Custom labels (user-defined rules)
-⭐ Priority Scoring
-Rank emails based on:
-Sender importance
-Keywords
-Past behavior (learning system)
-📄 Email Summarization
-Show:
-TL;DR summary
-Key action points
-🔔 Smart Notifications
-Notify only for:
-High priority emails
-Ignore noise
-🗂️ Dashboard View
-Sections:
-“Must Read”
-“Later”
-“Ignore”
+---
 
-🔹 Phase 2: Differentiators (Make it stand out)
-🤖 AI Assistant Actions
-“Reply suggestion”
-“Summarize thread”
-“Extract tasks”
-📌 Task Extraction
-Convert emails → To-do items
-Integrate with tools (Notion, Todoist)
-📊 Insights Dashboard
-Time spent on emails
-Sender analytics
-Productivity score
-🧩 Rule Engine
-If sender = X → mark important
-If contains “invoice” → action required
-🔎 Smart Search
-Semantic search (not keyword-based)
+## AI Actions
 
-🔹 Phase 3: Advanced (Scale-worthy)
-🧬 Personalization Engine
-Learns user behavior over time
-🧵 Thread Intelligence
-Understands entire conversation context
-🛡️ Security Layer
-Encryption
-No email storage (or secure storage)
-🧑‍🤝‍🧑 Team Inbox Mode
-Shared inbox for teams
-Assign emails to teammates
-🏗️ 3. Tech Stack (Recommended)
+```
+POST /ai/reply
+POST /ai/summarize
+POST /ai/extract_tasks
+```
 
+---
 
-Week 1
-Setup Rails API
-Gmail OAuth integration
-Fetch emails
+## Tasks
 
-Week 2
-Store emails
-Basic UI (Next.js)
-Show inbox
+```
+PATCH /tasks/:id
+GET /tasks
+```
 
-Week 3
-AI classification
-Priority scoring
+---
 
-Week 4
-Summarization
-Dashboard sections
+## Rules
 
-Week 5
-Notifications
-Rule engine (basic)
+```
+GET /rules
+POST /rules
+POST /rules/apply
+```
 
-Week 6
-Polish UI
-Deploy + testing
+---
+
+# 🎯 Core Differentiators
+
+---
+
+* 🧠 AI-first inbox (not just email client)
+* ⚡ Priority scoring for decision making
+* 📌 Task extraction from emails
+* 🤖 Smart reply with tone control
+* 🔄 Fully provider-agnostic architecture
+* 🧩 Rule-based automation engine
+
+---
+
+# 🔥 Roadmap
+
+---
+
+* [ ] Send email via Gmail API
+* [ ] Multi-reply preview (Superhuman-style)
+* [ ] AI query understanding (natural language filters)
+* [ ] Mobile app / browser extension
+* [ ] Team collaboration features
+
+---
+
+# 🤝 Contributing
+
+---
+
+Pull requests are welcome! For major changes, please open an issue first to discuss what you'd like to change.
+
+---
+
+# 📜 License
+
+---
+
+MIT License
+
+---
+
+# 💡 Inspiration
+
+---
+
+Built to reduce **email overload** and turn inbox into a **productivity engine powered by AI**.
