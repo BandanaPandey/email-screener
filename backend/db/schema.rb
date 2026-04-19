@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_04_15_044909) do
+ActiveRecord::Schema[8.1].define(version: 2026_04_19_052643) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
 
@@ -35,6 +35,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_04_15_044909) do
     t.text "priority_reason"
     t.integer "priority_score"
     t.text "reasoning"
+    t.text "reply_suggestion"
     t.text "summary"
     t.datetime "updated_at", null: false
     t.index ["email_id"], name: "index_email_insights_on_email_id"
