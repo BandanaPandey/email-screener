@@ -8,8 +8,7 @@ class EmailsController < ApplicationController
   end
 
   def sync
-    #EmailSyncJob.perform_later(current_user.id)
-    EmailSyncJob.perform_now(current_user.id) # For testing, remove in production
-    render json: { message: "Email sync started in background" }
+    EmailSyncJob.perform_later(current_user.id)
+    render json: { message: "Email sync queued" }, status: :accepted
   end
 end
