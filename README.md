@@ -1,313 +1,127 @@
-# 🚀 AI Smart Inbox (Email Screener)
+# Email Screener
 
-An intelligent **AI-powered inbox assistant** that helps you **prioritize, summarize, reply, and extract tasks** from emails automatically.
+AI-assisted inbox triage built with a Rails API backend and a Next.js frontend. The current v1 scope is Gmail sync, AI-generated summaries/replies/tasks, task tracking, and simple inbox rules.
 
-Built using **Ruby on Rails (backend)** + **Next.js (frontend)** with a focus on **productivity, automation, and clean UX**.
+## Stack
 
----
+- Backend: Ruby on Rails 8, PostgreSQL, Solid Queue
+- Frontend: Next.js App Router, React, Tailwind CSS
+- Auth: Google OAuth with session cookies
+- AI providers: OpenAI by default, with Anthropic/Ollama hooks in the service layer
 
-# ✨ Features
+## Local setup
 
----
+### Prerequisites
 
-## 📥 Email Integration
+- Ruby 3.2.x
+- Node 20+
+- PostgreSQL 14+
 
-* Connect with Gmail via OAuth
-* Secure token storage with refresh handling
-* Background email syncing using Sidekiq
-
----
-
-## 🧠 AI-Powered Email Intelligence
-
-* Automatic **email classification** (important, promotion, etc.)
-* **Priority scoring** (core differentiation)
-* AI-generated **summaries (TL;DR)**
-* Extract actionable **tasks from emails**
-
----
-
-## 🤖 AI Assistant Actions
-
-* ✨ **Reply Suggestions**
-* 🧠 **Summarize Email**
-* 📌 **Extract Tasks**
-
----
-
-## 🎯 Smart Reply Tones
-
-Customize how AI responds:
-
-* Casual
-* Professional
-* Short
-* Detailed
-
----
-
-## 📌 Task Management
-
-* Tasks auto-created from emails
-* Mark as completed/pending
-* Priority tagging (high / medium / low)
-* Due date tracking
-
----
-
-## 📊 Smart Inbox UI
-
-* Gmail-like layout (Sidebar + List + Detail)
-* Highlight high-priority emails
-* Task visibility inside emails
-* Clean and responsive UI
-
----
-
-## 🔔 Smart Notifications
-
-* Alerts for high-priority emails
-* Real-time feedback for important actions
-
----
-
-## ⚙️ Rule Engine
-
-Create custom automation rules:
-
-```
-If sender = boss → mark important  
-If subject contains "invoice" → mark action required  
-```
-
-* Apply rules to new and existing emails
-* Fully user-configurable
-
----
-
-## ⚡ Scalable Backend
-
-* Background jobs using Sidekiq
-* Provider-agnostic architecture:
-
-  * Email providers (Gmail, future-ready)
-  * AI providers (Ollama, OpenAI, Anthropic)
-
----
-
-# 🧱 Tech Stack
-
----
-
-## Backend
-
-* Ruby on Rails (API mode)
-* Sidekiq (background jobs)
-* PostgreSQL
-
----
-
-## Frontend
-
-* Next.js (App Router)
-* React + Tailwind CSS
-
----
-
-## AI Layer
-
-* Provider-agnostic abstraction
-* Supports:
-
-  * Ollama (local models)
-  * OpenAI (optional)
-  * Extendable to Anthropic, etc.
-
----
-
-## Authentication
-
-* Google OAuth (OmniAuth)
-* Session-based authentication
-
----
-
-# 🧠 Architecture Overview
-
----
-
-```
-Frontend (Next.js)
-        ↓
-Rails API (Controllers)
-        ↓
-Services Layer
-  - Email Sync
-  - AI Classification
-  - Task Extraction
-  - Rule Engine
-        ↓
-AI Provider Layer (Pluggable)
-        ↓
-Database (PostgreSQL)
-```
-
----
-
-# 🚀 Getting Started
-
----
-
-## 1️⃣ Clone the repo
+### 1. Clone and install dependencies
 
 ```bash
-git clone <your-repo-url>
-cd ai-smart-inbox
-```
+git clone git@github.com:BandanaPandey/email-screener.git
+cd email-screener
 
----
-
-## 2️⃣ Backend Setup (Rails)
-
-```bash
 cd backend
+cp .env.example .env
 bundle install
-rails db:create db:migrate
-```
 
----
-
-## 🔐 Setup Environment Variables
-
-```bash
-GOOGLE_CLIENT_ID=your_client_id
-GOOGLE_CLIENT_SECRET=your_secret
-```
-
----
-
-## ▶️ Start Rails server
-
-```bash
-rails s
-```
-
-Runs on:
-
-```
-http://localhost:3000
-```
-
----
-
-## ⚙️ Start Sidekiq
-
-```bash
-bundle exec sidekiq
-```
-
----
-
-## 3️⃣ Frontend Setup (Next.js)
-
-```bash
-cd frontend
+cd ../frontend
+cp .env.example .env.local
 npm install
 ```
 
----
+### 2. Configure environment variables
 
-## ▶️ Run frontend
+Backend values live in [backend/.env.example](/Users/Bandana/work/email-screener/backend/.env.example).
+
+Required backend variables:
+
+- `GOOGLE_CLIENT_ID`
+- `GOOGLE_CLIENT_SECRET`
+- `FRONTEND_APP_URL`
+- `FRONTEND_APP_ORIGINS`
+- `AI_PROVIDER`
+- `OPENAI_API_KEY` when `AI_PROVIDER=openai`
+
+Frontend values live in [frontend/.env.example](/Users/Bandana/work/email-screener/frontend/.env.example).
+
+Required frontend variables:
+
+- `NEXT_PUBLIC_API_BASE_URL`
+- `NEXT_PUBLIC_APP_URL`
+
+### 3. Prepare the databases
 
 ```bash
+cd backend
+bundle exec rails db:prepare
+```
+
+This prepares the primary Rails database plus the Solid Queue, cache, and cable databases used by Rails 8.
+
+### 4. Run the app
+
+Backend API:
+
+```bash
+cd backend
+bundle exec rails server
+```
+
+Background jobs:
+
+```bash
+cd backend
+bundle exec bin/jobs
+```
+
+Frontend:
+
+```bash
+cd frontend
 npm run dev
 ```
 
-Runs on:
+Local URLs:
 
-```
-http://localhost:3001
-```
+- Frontend: `http://localhost:3001`
+- Backend API: `http://localhost:3000`
+- Health check: `http://localhost:3000/health`
 
----
+## Local verification
 
-# 🔗 Key API Endpoints
+Backend bootstrap:
 
----
-
-## Email
-
-```
-GET /emails
-POST /sync_emails
+```bash
+cd backend
+bundle exec bin/setup --skip-server
 ```
 
----
+Frontend production build:
 
-## AI Actions
-
-```
-POST /ai/reply
-POST /ai/summarize
-POST /ai/extract_tasks
+```bash
+cd frontend
+npm run build
 ```
 
----
+## Implemented endpoints
 
-## Tasks
+- `GET /health`
+- `GET /emails`
+- `POST /sync_emails`
+- `GET /tasks`
+- `PATCH /tasks/:id`
+- `GET /rules`
+- `POST /rules`
+- `DELETE /rules/:id`
+- `POST /ai/reply`
+- `POST /ai/summarize`
+- `POST /ai/extract_tasks`
 
-```
-PATCH /tasks/:id
-GET /tasks
-```
+## Notes
 
----
-
-## Rules
-
-```
-GET /rules
-POST /rules
-POST /rules/apply
-```
-
----
-
-# 🎯 Core Differentiators
-
----
-
-* 🧠 AI-first inbox (not just email client)
-* ⚡ Priority scoring for decision making
-* 📌 Task extraction from emails
-* 🤖 Smart reply with tone control
-* 🔄 Fully provider-agnostic architecture
-* 🧩 Rule-based automation engine
-
----
-
-# 🔥 Roadmap
-
----
-
-* [ ] Send email via Gmail API
-* [ ] Multi-reply preview (Superhuman-style)
-* [ ] AI query understanding (natural language filters)
-* [ ] Mobile app / browser extension
-* [ ] Team collaboration features
-
----
-
-# 🤝 Contributing
-
----
-
-Pull requests are welcome! For major changes, please open an issue first to discuss what you'd like to change.
-
----
-
-# 💡 Inspiration
-
----
-
-Built to reduce **email overload** and turn inbox into a **productivity engine powered by AI**.
+- Gmail is the only supported email provider in the current implementation.
+- Email sync and processing now run through Solid Queue, so the API server and job worker must both be running for async processing to complete.
+- The setup and deployment documentation will be expanded further as the production-hardening phases continue.

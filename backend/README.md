@@ -1,24 +1,20 @@
-# README
+# Backend
 
-This README would normally document whatever steps are necessary to get the
-application up and running.
+The backend is a Rails 8 API app using PostgreSQL and Solid Queue.
 
-Things you may want to cover:
+Quick start:
 
-* Ruby version
+```bash
+cp .env.example .env
+bundle install
+bundle exec rails db:prepare
+bundle exec rails server
+```
 
-* System dependencies
+Run background jobs in a separate shell:
 
-* Configuration
+```bash
+bundle exec bin/jobs
+```
 
-* Database creation
-
-* Database initialization
-
-* How to run the test suite
-
-* Services (job queues, cache servers, search engines, etc.)
-
-* Deployment instructions
-
-* ...
+See the root [README](/Users/Bandana/work/email-screener/README.md) for the full local setup flow and environment variable reference.
