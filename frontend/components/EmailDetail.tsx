@@ -36,7 +36,9 @@ export default function EmailDetail({ email }: any) {
       await fetch(`${API_BASE_URL}/tasks/${taskId}`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ status: newStatus }),
+        body: JSON.stringify({
+          task: { status: newStatus },
+        }),
         credentials: "include",
       });
     } catch (err) {

@@ -24,6 +24,7 @@ class TasksController < ApplicationController
   end
 
   def task_params
-    params.require(:task).permit(:status)
+    task_attributes = params[:task].presence || params
+    task_attributes.permit(:status)
   end
 end
