@@ -1,10 +1,10 @@
 "use client";
 
-import { API_BASE_URL } from "@/lib/api";
+import { googleAuthUrl } from "@/lib/api";
 
 export default function ConnectButton() {
   const connectGmail = () => {
-    window.location.href = `${API_BASE_URL}/auth/google_oauth2`;
+    window.location.href = googleAuthUrl();
   };
 
   return (

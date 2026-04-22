@@ -1,7 +1,12 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { API_BASE_URL } from "@/lib/api";
+import {
+  extractTasks as extractTasksRequest,
+  fetchAiReply,
+  fetchAiSummary,
+  updateTaskStatus,
+} from "@/lib/api";
 
 export default function EmailDetail({ email }: any) {
   const [tasks, setTasks] = useState(email.tasks || []);
@@ -33,14 +38,7 @@ export default function EmailDetail({ email }: any) {
     );
 
     try {
-      await fetch(`${API_BASE_URL}/tasks/${taskId}`, {
-        method: "PATCH",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          task: { status: newStatus },
-        }),
-        credentials: "include",
-      });
+      await updateTaskStatus(taskId, newStatus);
     } catch (err) {
       console.error("Task update failed", err);
     }
@@ -51,29 +49,14 @@ export default function EmailDetail({ email }: any) {
     setError("");
 
     try {
-      const res = await fetch(`${API_BASE_URL}/ai/${type}`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        credentials: "include",
-        body: JSON.stringify({
-          email_id: email.id,
-          tone: tone, // 🔥 tone passed
-        }),
-      });
-
-      if (!res.ok) throw new Error("AI request failed");
-
-      const data = await res.json();
-
       if (type === "reply") {
+        const data = await fetchAiReply(email.id, tone);
         setReply(data.reply || "");
-      }
-
-      if (type === "summarize") {
+      } else if (type === "summarize") {
+        const data = await fetchAiSummary(email.id, tone);
         setSummary(data.summary || "");
-      }
-
-      if (type === "extract_tasks") {
+      } else {
+        const data = await extractTasksRequest(email.id, tone);
         if (Array.isArray(data.tasks)) {
           setTasks(data.tasks);
         }

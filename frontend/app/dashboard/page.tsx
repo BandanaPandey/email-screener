@@ -6,7 +6,10 @@ import EmailList from "@/components/EmailListItem";
 import EmailDetail from "@/components/EmailDetail";
 import useNotifications from "@/hooks/useNotifications";
 import NotificationBanner from "@/components/NotificationBanner";
-import { API_BASE_URL } from "@/lib/api";
+import {
+  fetchEmails as fetchEmailsRequest,
+  syncEmails as syncEmailsRequest,
+} from "@/lib/api";
 
 type FilterType =
   | "all"
@@ -35,15 +38,8 @@ export default function DashboardPage() {
   // 🔄 Fetch Emails
   const fetchEmails = async () => {
     try {
-      const res = await fetch(`${API_BASE_URL}/emails`, {
-        credentials: "include",
-      });
-
-      if (!res.ok) throw new Error("Failed API");
-
-      const data = await res.json();
-
-      setEmails(Array.isArray(data) ? data : data.emails || []);
+      const data = await fetchEmailsRequest();
+      setEmails(Array.isArray(data) ? data : []);
     } catch (err) {
       console.error("Fetch failed", err);
       setEmails([]);
@@ -70,11 +66,7 @@ export default function DashboardPage() {
     setSyncing(true);
 
     try {
-      await fetch(`${API_BASE_URL}/sync_emails`, {
-        method: "POST",
-        credentials: "include"
-      });
-
+      await syncEmailsRequest();
       await fetchEmails();
     } catch (err) {
       console.error("Sync failed", err);

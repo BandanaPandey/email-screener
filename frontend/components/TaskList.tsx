@@ -1,6 +1,6 @@
 "use client";
 
-import { API_BASE_URL } from "@/lib/api";
+import { updateTaskStatus } from "@/lib/api";
 
 export default function TaskList({ tasks, refresh }: any) {
   const toggleTask = async (task: any) => {
@@ -8,14 +8,7 @@ export default function TaskList({ tasks, refresh }: any) {
       task.status === "completed" ? "pending" : "completed";
 
     try {
-      await fetch(`${API_BASE_URL}/tasks/${task.id}`, {
-        method: "PATCH",
-        headers: { "Content-Type": "application/json" },
-        credentials: "include",
-        body: JSON.stringify({
-          task: { status: newStatus },
-        }),
-      });
+      await updateTaskStatus(task.id, newStatus);
 
       refresh();
     } catch (err) {

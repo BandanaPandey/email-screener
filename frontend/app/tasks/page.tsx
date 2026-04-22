@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import TaskList from "../../components/TaskList";
-import { API_BASE_URL } from "@/lib/api";
+import { fetchTasks as fetchTasksRequest } from "@/lib/api";
 
 type FilterType = "all" | "today" | "pending" | "completed";
 
@@ -12,10 +12,7 @@ export default function TasksPage() {
 
   const fetchTasks = async () => {
     try {
-      const res = await fetch(`${API_BASE_URL}/tasks`, {
-        credentials: "include", // Important for session cookies
-      });
-      const data = await res.json();
+      const data = await fetchTasksRequest();
       setTasks(Array.isArray(data) ? data : []);
     } catch (err) {
       console.error("Failed to fetch tasks", err);
