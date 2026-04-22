@@ -1,7 +1,6 @@
 class AuthController < ApplicationController
   def google
     auth = request.env['omniauth.auth']
-    puts "Received auth callback: #{auth.inspect}"
 
     user = User.find_by(email: auth.info.email)
 
@@ -23,6 +22,13 @@ class AuthController < ApplicationController
       expires_at: Time.at(auth.credentials.expires_at)
     )
 
-    redirect_to "http://localhost:3001/dashboard"
+    redirect_to frontend_dashboard_url, allow_other_host: true
+  end
+
+  private
+
+  def frontend_dashboard_url
+    frontend_app_url = ENV.fetch("FRONTEND_APP_URL", "http://localhost:3001")
+    "#{frontend_app_url.chomp('/')}/dashboard"
   end
 end

@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import TaskList from "../../components/TaskList";
+import { API_BASE_URL } from "@/lib/api";
 
 type FilterType = "all" | "today" | "pending" | "completed";
 
@@ -11,7 +12,7 @@ export default function TasksPage() {
 
   const fetchTasks = async () => {
     try {
-      const res = await fetch("http://localhost:3000/tasks", {
+      const res = await fetch(`${API_BASE_URL}/tasks`, {
         credentials: "include", // Important for session cookies
       });
       const data = await res.json();

@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import { API_BASE_URL } from "@/lib/api";
 
 export default function EmailDetail({ email }: any) {
   const [tasks, setTasks] = useState(email.tasks || []);
@@ -32,7 +33,7 @@ export default function EmailDetail({ email }: any) {
     );
 
     try {
-      await fetch(`http://localhost:3000/tasks/${taskId}`, {
+      await fetch(`${API_BASE_URL}/tasks/${taskId}`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ status: newStatus }),
@@ -48,7 +49,7 @@ export default function EmailDetail({ email }: any) {
     setError("");
 
     try {
-      const res = await fetch(`http://localhost:3000/ai/${type}`, {
+      const res = await fetch(`${API_BASE_URL}/ai/${type}`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         credentials: "include",

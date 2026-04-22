@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { API_BASE_URL } from "@/lib/api";
 
 export default function RulesPage() {
   const [rules, setRules] = useState<any[]>([]);
@@ -12,7 +13,7 @@ export default function RulesPage() {
   });
 
   const fetchRules = async () => {
-    const res = await fetch("http://localhost:3000/rules", {
+    const res = await fetch(`${API_BASE_URL}/rules`, {
       credentials: "include",
     });
     const data = await res.json();
@@ -26,7 +27,7 @@ export default function RulesPage() {
   const createRule = async () => {
     if (!form.value) return;
 
-    await fetch("http://localhost:3000/rules", {
+    await fetch(`${API_BASE_URL}/rules`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       credentials: "include",
@@ -38,7 +39,7 @@ export default function RulesPage() {
   };
 
   const deleteRule = async (id: number) => {
-    await fetch(`http://localhost:3000/rules/${id}`, {
+    await fetch(`${API_BASE_URL}/rules/${id}`, {
       method: "DELETE",
       credentials: "include",
     });

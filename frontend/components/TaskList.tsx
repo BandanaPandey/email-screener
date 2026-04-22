@@ -1,12 +1,14 @@
 "use client";
 
+import { API_BASE_URL } from "@/lib/api";
+
 export default function TaskList({ tasks, refresh }: any) {
   const toggleTask = async (task: any) => {
     const newStatus =
       task.status === "completed" ? "pending" : "completed";
 
     try {
-      await fetch(`http://localhost:3000/tasks/${task.id}`, {
+      await fetch(`${API_BASE_URL}/tasks/${task.id}`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
         credentials: "include",

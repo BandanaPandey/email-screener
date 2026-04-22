@@ -6,6 +6,7 @@ import EmailList from "@/components/EmailListItem";
 import EmailDetail from "@/components/EmailDetail";
 import useNotifications from "@/hooks/useNotifications";
 import NotificationBanner from "@/components/NotificationBanner";
+import { API_BASE_URL } from "@/lib/api";
 
 type FilterType =
   | "all"
@@ -34,7 +35,7 @@ export default function DashboardPage() {
   // 🔄 Fetch Emails
   const fetchEmails = async () => {
     try {
-      const res = await fetch("http://localhost:3000/emails", {
+      const res = await fetch(`${API_BASE_URL}/emails`, {
         credentials: "include",
       });
 
@@ -69,7 +70,7 @@ export default function DashboardPage() {
     setSyncing(true);
 
     try {
-      await fetch("http://localhost:3000/sync_emails", {
+      await fetch(`${API_BASE_URL}/sync_emails`, {
         method: "POST",
         credentials: "include"
       });
