@@ -2,6 +2,8 @@
 
 import { useEffect, useState } from "react";
 import AuthRequiredState from "@/components/AuthRequiredState";
+import EmptyState from "@/components/EmptyState";
+import InlineMessage from "@/components/InlineMessage";
 import TaskList from "../../components/TaskList";
 import {
   ApiError,
@@ -17,13 +19,16 @@ export default function TasksPage() {
   const [filter, setFilter] = useState<FilterType>("all");
   const [loading, setLoading] = useState(true);
   const [isAuthenticated, setIsAuthenticated] = useState(true);
+  const [error, setError] = useState("");
 
   const fetchTasks = async () => {
     try {
       const data = await fetchTasksRequest();
       setTasks(data.items);
+      setError("");
     } catch (err) {
       console.error("Failed to fetch tasks", err);
+      setError("We could not load your tasks right now.");
     }
   };
 
@@ -81,6 +86,11 @@ export default function TasksPage() {
   return (
     <div className="p-6">
       <h1 className="text-2xl font-bold mb-4">Task Dashboard</h1>
+      {error && (
+        <div className="mb-4">
+          <InlineMessage message={error} tone="error" />
+        </div>
+      )}
 
       {/* FILTERS */}
       <div className="flex gap-2 mb-4">
@@ -97,7 +107,14 @@ export default function TasksPage() {
         ))}
       </div>
 
-      <TaskList tasks={filteredTasks} refresh={fetchTasks} />
+      {filteredTasks.length > 0 ? (
+        <TaskList tasks={filteredTasks} refresh={fetchTasks} />
+      ) : (
+        <EmptyState
+          title="No tasks for this view"
+          message="Try another filter or extract tasks from new emails to populate this list."
+        />
+      )}
     </div>
   );
 }

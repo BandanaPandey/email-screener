@@ -1,10 +1,12 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
 import AuthRequiredState from "@/components/AuthRequiredState";
+import EmptyState from "@/components/EmptyState";
 import EmailList from "@/components/EmailListItem";
 import EmailDetail from "@/components/EmailDetail";
+import InlineMessage from "@/components/InlineMessage";
 import useNotifications from "@/hooks/useNotifications";
 import NotificationBanner from "@/components/NotificationBanner";
 import {
@@ -30,6 +32,9 @@ export default function DashboardPage() {
   const [syncing, setSyncing] = useState(false);
   const [filter, setFilter] = useState<FilterType>("all");
   const [isAuthenticated, setIsAuthenticated] = useState(true);
+  const [error, setError] = useState("");
+  const [successMessage, setSuccessMessage] = useState("");
+  const notifiedIdsRef = useRef<Set<number>>(new Set());
 
   // 🔔 Notifications
   const notifications = useNotifications(emails);
@@ -46,9 +51,11 @@ export default function DashboardPage() {
     try {
       const data = await fetchEmailsRequest();
       setEmails(data.items);
+      setError("");
     } catch (err) {
       console.error("Fetch failed", err);
       setEmails([]);
+      setError("We could not load your inbox right now.");
     } finally {
       setLoading(false);
     }
@@ -87,12 +94,16 @@ export default function DashboardPage() {
   // 🔥 Sync Trigger
   const handleSync = async () => {
     setSyncing(true);
+    setError("");
+    setSuccessMessage("");
 
     try {
       await syncEmailsRequest();
       await fetchEmails();
+      setSuccessMessage("Inbox sync queued and refreshed.");
     } catch (err) {
       console.error("Sync failed", err);
+      setError("Inbox sync failed. Please try again.");
     } finally {
       setSyncing(false);
     }
@@ -118,16 +129,15 @@ export default function DashboardPage() {
   });
 
   // 🔥 Sorting
-  const sortedEmails = Array.isArray(filteredEmails)
-    ? [...filteredEmails].sort(
+  const sortedEmails = useMemo(
+    () =>
+      [...filteredEmails].sort(
         (a, b) =>
           (b.email_insight?.priority_score || 0) -
           (a.email_insight?.priority_score || 0)
-      )
-    : [];
-
-  // 🔔 Prevent duplicate notifications
-  const [notifiedIds, setNotifiedIds] = useState<Set<number>>(new Set());
+      ),
+    [filteredEmails]
+  );
 
   useEffect(() => {
     if (!("Notification" in window)) return;
@@ -136,15 +146,12 @@ export default function DashboardPage() {
     sortedEmails.forEach((email) => {
       const priorityScore = email.email_insight?.priority_score ?? 0;
 
-      if (
-        priorityScore > 85 &&
-        !notifiedIds.has(email.id)
-      ) {
+      if (priorityScore > 85 && !notifiedIdsRef.current.has(email.id)) {
         new Notification("🔥 High Priority Email", {
           body: email.subject,
         });
 
-        setNotifiedIds((prev) => new Set(prev).add(email.id));
+        notifiedIdsRef.current.add(email.id);
       }
     });
   }, [sortedEmails]);
@@ -166,11 +173,11 @@ export default function DashboardPage() {
   }
 
   return (
-    <div className="grid grid-cols-3 h-screen">
+    <div className="flex min-h-[calc(100vh-73px)] flex-col lg:grid lg:grid-cols-3">
       {/* LEFT PANEL */}
-      <div className="col-span-1 border-r p-4 bg-gray-50 overflow-y-auto">
+      <div className="border-b bg-gray-50 p-4 lg:col-span-1 lg:border-b-0 lg:border-r lg:overflow-y-auto">
         {/* HEADER */}
-        <div className="flex justify-between items-center mb-2">
+        <div className="mb-2 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
           <h1 className="text-xl font-bold">Smart Inbox</h1>
 
           <div className="flex gap-2">
@@ -196,6 +203,16 @@ export default function DashboardPage() {
         <p className="text-xs text-gray-500 mb-3">
           {totalTasks} tasks across emails
         </p>
+        {error && (
+          <div className="mb-3">
+            <InlineMessage message={error} tone="error" />
+          </div>
+        )}
+        {successMessage && (
+          <div className="mb-3">
+            <InlineMessage message={successMessage} />
+          </div>
+        )}
 
         {/* 🔔 Notifications */}
         <NotificationBanner notifications={notifications} />
@@ -228,16 +245,23 @@ export default function DashboardPage() {
           emails={sortedEmails}
           onSelect={setSelectedEmail}
         />
+        {sortedEmails.length === 0 && (
+          <EmptyState
+            title="Inbox is empty"
+            message="Sync your Gmail account to pull in messages and start triaging your inbox."
+          />
+        )}
       </div>
 
       {/* RIGHT PANEL */}
-      <div className="col-span-2 p-6 overflow-y-auto">
+      <div className="p-6 lg:col-span-2 lg:overflow-y-auto">
         {selectedEmail ? (
           <EmailDetail key={selectedEmail?.id} email={selectedEmail} />
         ) : (
-          <p className="text-gray-500">
-            Select an email to view details
-          </p>
+          <EmptyState
+            title="Select an email"
+            message="Pick a message from the inbox to view insights, tasks, and AI actions."
+          />
         )}
       </div>
     </div>

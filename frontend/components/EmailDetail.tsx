@@ -7,6 +7,8 @@ import {
   fetchAiSummary,
   updateTaskStatus,
 } from "@/lib/api";
+import EmptyState from "@/components/EmptyState";
+import InlineMessage from "@/components/InlineMessage";
 import type { Email, EmailTask } from "@/lib/types";
 
 type Props = {
@@ -19,6 +21,7 @@ export default function EmailDetail({ email }: Props) {
   const [summary, setSummary] = useState("");
   const [loading, setLoading] = useState<string | null>(null);
   const [error, setError] = useState("");
+  const [successMessage, setSuccessMessage] = useState("");
 
   // 🔥 NEW: tone state
   const [tone, setTone] = useState("professional");
@@ -29,8 +32,9 @@ export default function EmailDetail({ email }: Props) {
     setSummary("");
     setTasks(email.tasks || []);
     setError("");
+    setSuccessMessage("");
     setTone("professional"); // reset tone
-  }, [email.id]);
+  }, [email.id, email.tasks]);
 
   const extractedTaskToEmailTask = (
     task: {
@@ -49,32 +53,40 @@ export default function EmailDetail({ email }: Props) {
 
   const toggleTask = async (taskId: number, status: string) => {
     const newStatus = status === "completed" ? "pending" : "completed";
+    const previousTasks = tasks;
 
-    // Optimistic UI
     setTasks((prev) =>
       prev.map((t) =>
         t.id === taskId ? { ...t, status: newStatus } : t
       )
     );
+    setError("");
+    setSuccessMessage("");
 
     try {
       await updateTaskStatus(taskId, newStatus);
+      setSuccessMessage("Task status updated.");
     } catch (err) {
       console.error("Task update failed", err);
+      setTasks(previousTasks);
+      setError("Task update failed. Please try again.");
     }
   };
 
   const callAI = async (type: string) => {
     setLoading(type);
     setError("");
+    setSuccessMessage("");
 
     try {
       if (type === "reply") {
         const data = await fetchAiReply(email.id, tone);
         setReply(data.reply || "");
+        setSuccessMessage("Reply suggestion generated.");
       } else if (type === "summarize") {
         const data = await fetchAiSummary(email.id, tone);
         setSummary(data.summary || "");
+        setSuccessMessage("Summary generated.");
       } else {
         const data = await extractTasksRequest(email.id, tone);
         if (Array.isArray(data.tasks)) {
@@ -82,6 +94,11 @@ export default function EmailDetail({ email }: Props) {
             data.tasks.map((task, index) =>
               extractedTaskToEmailTask(task, index)
             )
+          );
+          setSuccessMessage(
+            data.tasks.length > 0
+              ? "Tasks extracted from this email."
+              : "No actionable tasks found in this email."
           );
         }
       }
@@ -107,8 +124,13 @@ export default function EmailDetail({ email }: Props) {
 
       {/* ERROR */}
       {error && (
-        <div className="mb-3 p-2 bg-red-100 text-red-600 rounded">
-          {error}
+        <div className="mb-3">
+          <InlineMessage message={error} tone="error" />
+        </div>
+      )}
+      {successMessage && (
+        <div className="mb-3">
+          <InlineMessage message={successMessage} />
         </div>
       )}
 
@@ -182,6 +204,14 @@ export default function EmailDetail({ email }: Props) {
               </li>
             ))}
           </ul>
+        </div>
+      )}
+      {tasks.length === 0 && (
+        <div className="mb-4">
+          <EmptyState
+            title="No tasks yet"
+            message="Run task extraction or wait for email processing to surface action items here."
+          />
         </div>
       )}
 

@@ -2,6 +2,8 @@
 
 import { useEffect, useState } from "react";
 import AuthRequiredState from "@/components/AuthRequiredState";
+import EmptyState from "@/components/EmptyState";
+import InlineMessage from "@/components/InlineMessage";
 import {
   ApiError,
   createRule as createRuleRequest,
@@ -15,6 +17,8 @@ export default function RulesPage() {
   const [rules, setRules] = useState<Rule[]>([]);
   const [loading, setLoading] = useState(true);
   const [isAuthenticated, setIsAuthenticated] = useState(true);
+  const [error, setError] = useState("");
+  const [successMessage, setSuccessMessage] = useState("");
   const [form, setForm] = useState({
     field: "subject",
     operator: "contains",
@@ -23,8 +27,14 @@ export default function RulesPage() {
   });
 
   const fetchRules = async () => {
-    const data = await fetchRulesRequest();
-    setRules(data.items);
+    try {
+      const data = await fetchRulesRequest();
+      setRules(data.items);
+      setError("");
+    } catch (err) {
+      console.error("Failed to fetch rules", err);
+      setError("We could not load your rules right now.");
+    }
   };
 
   useEffect(() => {
@@ -51,16 +61,28 @@ export default function RulesPage() {
   const createRule = async () => {
     if (!form.value) return;
 
-    await createRuleRequest(form);
-
-    setForm({ ...form, value: "" });
-    fetchRules();
+    try {
+      await createRuleRequest(form);
+      setForm({ ...form, value: "" });
+      setSuccessMessage("Rule created.");
+      setError("");
+      await fetchRules();
+    } catch (err) {
+      console.error("Failed to create rule", err);
+      setError("Rule creation failed. Please try again.");
+    }
   };
 
   const deleteRule = async (id: number) => {
-    await deleteRuleRequest(id);
-
-    fetchRules();
+    try {
+      await deleteRuleRequest(id);
+      setSuccessMessage("Rule deleted.");
+      setError("");
+      await fetchRules();
+    } catch (err) {
+      console.error("Failed to delete rule", err);
+      setError("Rule deletion failed. Please try again.");
+    }
   };
 
   if (loading) return <p className="p-6">Loading...</p>;
@@ -76,6 +98,16 @@ export default function RulesPage() {
   return (
     <div className="p-6 max-w-3xl mx-auto">
       <h1 className="text-2xl font-bold mb-4">Rule Engine</h1>
+      {error && (
+        <div className="mb-4">
+          <InlineMessage message={error} tone="error" />
+        </div>
+      )}
+      {successMessage && (
+        <div className="mb-4">
+          <InlineMessage message={successMessage} />
+        </div>
+      )}
 
       {/* CREATE RULE */}
       <div className="flex flex-wrap gap-2 mb-6">
@@ -124,26 +156,33 @@ export default function RulesPage() {
       </div>
 
       {/* RULE LIST */}
-      <div className="space-y-2">
-        {rules.map((r) => (
-          <div
-            key={r.id}
-            className="p-3 border rounded flex justify-between items-center"
-          >
-            <span className="text-sm">
-              IF <b>{r.field}</b> {r.operator} "<b>{r.value}</b>" →{" "}
-              <b>{r.action}</b>
-            </span>
-
-            <button
-              onClick={() => deleteRule(r.id)}
-              className="text-red-500 text-sm"
+      {rules.length > 0 ? (
+        <div className="space-y-2">
+          {rules.map((r) => (
+            <div
+              key={r.id}
+              className="p-3 border rounded flex justify-between items-center"
             >
-              Delete
-            </button>
-          </div>
-        ))}
-      </div>
+              <span className="text-sm">
+                IF <b>{r.field}</b> {r.operator} value <b>{r.value}</b> →{" "}
+                <b>{r.action}</b>
+              </span>
+
+              <button
+                onClick={() => deleteRule(r.id)}
+                className="text-red-500 text-sm"
+              >
+                Delete
+              </button>
+            </div>
+          ))}
+        </div>
+      ) : (
+        <EmptyState
+          title="No rules yet"
+          message="Add a rule to automatically prioritize or categorize incoming email."
+        />
+      )}
     </div>
   );
 }

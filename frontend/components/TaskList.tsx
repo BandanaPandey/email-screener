@@ -1,7 +1,9 @@
 "use client";
 
+import InlineMessage from "@/components/InlineMessage";
 import { updateTaskStatus } from "@/lib/api";
 import type { Task } from "@/lib/types";
+import { useState } from "react";
 
 type Props = {
   tasks: Task[];
@@ -9,21 +11,30 @@ type Props = {
 };
 
 export default function TaskList({ tasks, refresh }: Props) {
+  const [message, setMessage] = useState("");
+  const [error, setError] = useState("");
+
   const toggleTask = async (task: Task) => {
     const newStatus =
       task.status === "completed" ? "pending" : "completed";
+    setMessage("");
+    setError("");
 
     try {
       await updateTaskStatus(task.id, newStatus);
 
-      refresh();
+      await refresh();
+      setMessage("Task status updated.");
     } catch (err) {
       console.error("Task update failed", err);
+      setError("Task update failed. Please try again.");
     }
   };
 
   return (
     <div className="space-y-3">
+      {error && <InlineMessage message={error} tone="error" />}
+      {message && <InlineMessage message={message} />}
       {tasks.map((task) => (
         <div
           key={task.id}
