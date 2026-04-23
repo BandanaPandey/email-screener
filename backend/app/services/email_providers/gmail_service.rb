@@ -39,8 +39,20 @@ module EmailProviders
         subject: find_header(headers, "Subject"),
         sender: find_header(headers, "From"),
         body: body,
-        received_at: Time.current
+        received_at: extract_received_at(data, headers)
       )
+    end
+
+    def extract_received_at(data, headers)
+      internal_date = data["internalDate"]
+      return Time.zone.at(internal_date.to_f / 1000.0) if internal_date.present?
+
+      date_header = find_header(headers, "Date")
+      return Time.zone.parse(date_header) if date_header.present?
+
+      Time.current
+    rescue ArgumentError, TypeError
+      Time.current
     end
 
     def extract_body(payload)
