@@ -9,12 +9,9 @@ module Ai
       prompt = build_prompt
 
       raw_response = @client.chat(prompt)
-      
       parse_ai_response(raw_response)
-      
     rescue => e
-      puts("AI Classification failed: #{e.message}")
-      Rails.logger.error("AI Classification failed: #{e.message}")
+      Rails.logger.error("AI Classification failed for email_id=#{@email.id}: #{e.class} #{e.message}")
       nil
     end
 
@@ -64,7 +61,7 @@ module Ai
       json_match = raw_response.match(/\{.*\}/m)
 
       unless json_match
-        Rails.logger.error("No JSON found in AI response: #{raw_response}")
+        Rails.logger.error("No JSON found in AI classification response for email_id=#{@email.id}")
         return nil
       end
 
@@ -73,8 +70,7 @@ module Ai
       begin
         JSON.parse(json_string)
       rescue JSON::ParserError => e
-        Rails.logger.error("JSON parse failed: #{e.message}")
-        Rails.logger.error("Raw JSON string: #{json_string}")
+        Rails.logger.error("AI classification JSON parse failed for email_id=#{@email.id}: #{e.message}")
         nil
       end
     end

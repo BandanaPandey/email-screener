@@ -2,6 +2,8 @@ class EmailProcessingJob < ApplicationJob
   queue_as :default
 
   def perform(user_id, email_id)
+    Rails.logger.info("Processing email email_id=#{email_id} user_id=#{user_id}")
+
     user = User.find_by(id: user_id)
     return unless user
     email = Email.find_by(id: email_id)
@@ -58,7 +60,7 @@ class EmailProcessingJob < ApplicationJob
 
     RuleEngineService.new(email, user).apply!
   rescue => e
-    Rails.logger.error("EmailProcessingJob failed: #{e.message}")
+    Rails.logger.error("EmailProcessingJob failed for email_id=#{email_id} user_id=#{user_id}: #{e.class} #{e.message}")
   end
 
   private

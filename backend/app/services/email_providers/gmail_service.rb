@@ -7,7 +7,7 @@ module EmailProviders
     BASE_URL = "https://gmail.googleapis.com/gmail/v1/users/me/messages"
 
     def fetch_emails
-      puts("Fetching emails for account with ID: #{@account.id}")
+      Rails.logger.info("Fetching Gmail messages for account_id=#{@account.id}")
       messages = list_messages
 
       messages.each do |msg|
@@ -22,6 +22,9 @@ module EmailProviders
       return [] if res.nil? || !res.success?
 
       JSON.parse(res.body)["messages"] || []
+    rescue JSON::ParserError => e
+      Rails.logger.error("Failed to parse Gmail message list for account_id=#{@account.id}: #{e.message}")
+      []
     end
 
     def process_message(message_id)
@@ -41,6 +44,8 @@ module EmailProviders
         body: body,
         received_at: extract_received_at(data, headers)
       )
+    rescue JSON::ParserError => e
+      Rails.logger.error("Failed to parse Gmail message message_id=#{message_id}: #{e.message}")
     end
 
     def extract_received_at(data, headers)
@@ -85,9 +90,7 @@ module EmailProviders
 
     # ---------- TOKEN HANDLING ----------
     def ensure_valid_token!
-      if @account.expired?
-        Google::RefreshTokenService.new(@account).call
-      end
+      Google::RefreshTokenService.new(@account).call if @account.expired?
     end
 
     def decode_body(data)
@@ -107,13 +110,14 @@ module EmailProviders
       response = connection.get(url)
 
       if response.status == 401
+        Rails.logger.warn("Received 401 from Gmail API for account_id=#{@account.id}; attempting token refresh")
         Google::RefreshTokenService.new(@account).call
         response = connection.get(url)
       end
 
       response
     rescue => e
-      Rails.logger.error("Gmail error: #{e.message}")
+      Rails.logger.error("Gmail request failed for account_id=#{@account.id}: #{e.class} #{e.message}")
       nil
     end
 

@@ -2,8 +2,7 @@ module Ai
   class ProviderFactory
     def self.build
       provider = ENV.fetch("AI_PROVIDER", "openai")
-
-      puts("Building AI client for provider: #{provider}")
+      Rails.logger.info("Building AI client for provider=#{provider}")
 
       case provider
       when "openai"
