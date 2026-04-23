@@ -16,7 +16,7 @@ class Google::RefreshTokenServiceTest < ActiveSupport::TestCase
       200
     )
 
-    with_stubbed_module_method(Faraday, :post, -> { response }) do
+    with_stubbed_module_method(Faraday, :post, ->(*_args) { response }) do
       Google::RefreshTokenService.new(account).call
     end
 
@@ -40,7 +40,7 @@ class Google::RefreshTokenServiceTest < ActiveSupport::TestCase
     )
 
     error = assert_raises(RuntimeError) do
-      with_stubbed_module_method(Faraday, :post, -> { response }) do
+      with_stubbed_module_method(Faraday, :post, ->(*_args) { response }) do
         Google::RefreshTokenService.new(account).call
       end
     end

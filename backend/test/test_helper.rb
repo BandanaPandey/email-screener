@@ -43,8 +43,12 @@ module ActiveSupport
       eigenclass = class << klass; self; end
       original_new = klass.method(:new)
 
-      eigenclass.send(:define_method, :new) do |*_args, **_kwargs|
-        fake_object
+      eigenclass.send(:define_method, :new) do |*args, **kwargs|
+        if fake_object.is_a?(Proc) || fake_object.is_a?(Method)
+          fake_object.call(*args, **kwargs)
+        else
+          fake_object
+        end
       end
 
       yield
@@ -56,8 +60,8 @@ module ActiveSupport
       eigenclass = class << mod; self; end
       original_method = mod.method(method_name)
 
-      eigenclass.send(:define_method, method_name) do |*_args, **_kwargs|
-        fake_callable.call
+      eigenclass.send(:define_method, method_name) do |*args, **kwargs|
+        fake_callable.call(*args, **kwargs)
       end
 
       yield
