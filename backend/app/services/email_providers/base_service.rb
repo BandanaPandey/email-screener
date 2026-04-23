@@ -13,19 +13,27 @@ module EmailProviders
     protected
 
     def create_email(attrs)
-      return if Email.exists?(external_id: attrs[:external_id], provider: @account.provider)
-
-      email = Email.create!(
+      email = Email.find_or_initialize_by(
         user: @user,
+        provider: @account.provider,
+        external_id: attrs[:external_id]
+      )
+
+      email.assign_attributes(
         subject: attrs[:subject],
         sender: attrs[:sender],
         body: attrs[:body] || "",
-        external_id: attrs[:external_id],
-        received_at: attrs[:received_at] || Time.current,
-        provider: @account.provider
+        received_at: attrs[:received_at] || Time.current
       )
 
-      EmailProcessingJob.perform_later(@user.id, email.id)
+      is_new_record = email.new_record?
+      email.save!
+
+      EmailProcessingJob.perform_later(@user.id, email.id) if is_new_record
+    rescue ActiveRecord::RecordNotUnique
+      Rails.logger.info(
+        "Email already exists for user=#{@user.id} provider=#{@account.provider} external_id=#{attrs[:external_id]}"
+      )
     end
   end
 end

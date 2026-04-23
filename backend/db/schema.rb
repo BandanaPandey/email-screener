@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_04_19_052643) do
+ActiveRecord::Schema[8.1].define(version: 2026_04_23_070000) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
 
@@ -38,7 +38,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_04_19_052643) do
     t.text "reply_suggestion"
     t.text "summary"
     t.datetime "updated_at", null: false
-    t.index ["email_id"], name: "index_email_insights_on_email_id"
+    t.index ["email_id"], name: "index_email_insights_on_email_id", unique: true
   end
 
   create_table "emails", force: :cascade do |t|
@@ -51,6 +51,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_04_19_052643) do
     t.string "subject"
     t.datetime "updated_at", null: false
     t.bigint "user_id", null: false
+    t.index ["user_id", "provider", "external_id"], name: "index_emails_on_user_id_and_provider_and_external_id", unique: true
     t.index ["user_id"], name: "index_emails_on_user_id"
   end
 

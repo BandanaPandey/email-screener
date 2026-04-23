@@ -2,30 +2,24 @@ class EmailProcessingJob < ApplicationJob
   queue_as :default
 
   def perform(user_id, email_id)
-    puts "Processing email ID: #{email_id}"
-
     user = User.find_by(id: user_id)
     return unless user
     email = Email.find_by(id: email_id)
     return unless email
 
-    return unless should_process?(email) # avoid reprocessing
+    return unless should_process?(email)
 
-    # 1. Classification
     result = Ai::ClassificationService.new(email).call
-
-    puts "Classification result for email ID #{email_id}: #{result.inspect}"
-
     return unless result
 
-    insight = EmailInsight.create!(
-      email: email,
+    insight = EmailInsight.find_or_initialize_by(email: email)
+    insight.assign_attributes(
       category: result["category"],
       confidence: result["confidence"],
       reasoning: result["reasoning"]
     )
+    insight.save! if insight.new_record? || insight.changed?
 
-    # 2. Priority
     priority = Ai::PriorityScoringService.new(email, insight).call
 
     if priority
@@ -35,39 +29,33 @@ class EmailProcessingJob < ApplicationJob
       )
     end
 
-    #return if insight.priority_score < 50
-
-    # 🔥 3. Summarization
     summary = Ai::SummarizationService.new(email).call
-
-    puts "Summarization result for email ID #{email_id}: #{summary.inspect}"
 
     if summary
       insight.update!(
         summary: summary
-        #key_points: summary["key_points"].join("\n")
       )
     end
 
-    # 🔥 4. Task Extraction
     tasks_data = Ai::TaskExtractionService.new(email).call
 
-    puts "Task extraction result for email ID #{email_id}: #{tasks_data.inspect}"
+    extracted_tasks = tasks_data.is_a?(Hash) ? tasks_data["tasks"] || tasks_data[:tasks] || [] : []
 
-    if tasks_data && tasks_data["tasks"].present?
-      tasks_data["tasks"].each do |task|
+    if extracted_tasks.present?
+      extracted_tasks.each do |task|
         next if task["title"].blank?
 
-        email.tasks.create!(
+        email_task = email.tasks.find_or_initialize_by(
           title: task["title"],
-          due_date: task["due_date"],
-          priority: task["priority"] || "medium",
-          status: "pending"
+          due_date: task["due_date"]
         )
+
+        email_task.priority = task["priority"] || "medium"
+        email_task.status = "pending" if email_task.status.blank?
+        email_task.save! if email_task.new_record? || email_task.changed?
       end
     end
 
-    # 🔥 Step 4: Apply Rules (AFTER AI)
     RuleEngineService.new(email, user).apply!
   rescue => e
     Rails.logger.error("EmailProcessingJob failed: #{e.message}")
@@ -76,15 +64,11 @@ class EmailProcessingJob < ApplicationJob
   private
 
   def should_process?(email)
-    return false if email.email_insight.present?
-
     return false if email.subject.blank?
 
-    # Skip promotions early
     return false if email.sender&.include?("noreply")
     return false if email.sender&.include?("newsletter")
 
-    # Skip very old emails
     return false if email.received_at < 7.days.ago
 
     true
