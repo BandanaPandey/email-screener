@@ -2,12 +2,15 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
+import AuthRequiredState from "@/components/AuthRequiredState";
 import EmailList from "@/components/EmailListItem";
 import EmailDetail from "@/components/EmailDetail";
 import useNotifications from "@/hooks/useNotifications";
 import NotificationBanner from "@/components/NotificationBanner";
 import {
+  ApiError,
   fetchEmails as fetchEmailsRequest,
+  fetchSession,
   syncEmails as syncEmailsRequest,
 } from "@/lib/api";
 
@@ -24,6 +27,7 @@ export default function DashboardPage() {
   const [loading, setLoading] = useState(true);
   const [syncing, setSyncing] = useState(false);
   const [filter, setFilter] = useState<FilterType>("all");
+  const [isAuthenticated, setIsAuthenticated] = useState(true);
 
   // 🔔 Notifications
   const notifications = useNotifications(emails);
@@ -49,7 +53,24 @@ export default function DashboardPage() {
   };
 
   useEffect(() => {
-    fetchEmails();
+    const loadSessionAndEmails = async () => {
+      try {
+        await fetchSession();
+        setIsAuthenticated(true);
+        await fetchEmails();
+      } catch (err) {
+        if (err instanceof ApiError && err.status === 401) {
+          setIsAuthenticated(false);
+          setLoading(false);
+          return;
+        }
+
+        console.error("Session check failed", err);
+        setLoading(false);
+      }
+    };
+
+    loadSessionAndEmails();
   }, []);
 
   // // 🔁 Auto polling
@@ -145,6 +166,14 @@ export default function DashboardPage() {
   );
 
   if (loading) return <p className="p-4">Loading...</p>;
+  if (!isAuthenticated) {
+    return (
+      <AuthRequiredState
+        title="Sign in to view your inbox"
+        message="Your inbox, tasks, and AI actions are available after you connect your Gmail account."
+      />
+    );
+  }
 
   return (
     <div className="grid grid-cols-3 h-screen">

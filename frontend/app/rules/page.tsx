@@ -1,14 +1,19 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import AuthRequiredState from "@/components/AuthRequiredState";
 import {
+  ApiError,
   createRule as createRuleRequest,
   deleteRule as deleteRuleRequest,
+  fetchSession,
   fetchRules as fetchRulesRequest,
 } from "@/lib/api";
 
 export default function RulesPage() {
   const [rules, setRules] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [isAuthenticated, setIsAuthenticated] = useState(true);
   const [form, setForm] = useState({
     field: "subject",
     operator: "contains",
@@ -22,7 +27,24 @@ export default function RulesPage() {
   };
 
   useEffect(() => {
-    fetchRules();
+    const loadSessionAndRules = async () => {
+      try {
+        await fetchSession();
+        setIsAuthenticated(true);
+        await fetchRules();
+      } catch (err) {
+        if (err instanceof ApiError && err.status === 401) {
+          setIsAuthenticated(false);
+          return;
+        }
+
+        console.error("Session check failed", err);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    loadSessionAndRules();
   }, []);
 
   const createRule = async () => {
@@ -39,6 +61,16 @@ export default function RulesPage() {
 
     fetchRules();
   };
+
+  if (loading) return <p className="p-6">Loading...</p>;
+  if (!isAuthenticated) {
+    return (
+      <AuthRequiredState
+        title="Sign in to manage rules"
+        message="Connect your Gmail account to create automation rules for your inbox."
+      />
+    );
+  }
 
   return (
     <div className="p-6 max-w-3xl mx-auto">

@@ -9,6 +9,7 @@ Rails.application.routes.draw do
 
   get '/auth/:provider/callback', to: 'auth#google'
   get '/auth/failure', to: redirect('/')
+  get "/session", to: "sessions#show"
 
   resources :emails, only: [:index]
   post '/sync_emails', to: 'emails#sync'

@@ -11,6 +11,24 @@ type ApiRequestOptions = Omit<RequestInit, "body"> & {
   body?: BodyInit | object | null;
 };
 
+export class ApiError extends Error {
+  status: number;
+
+  constructor(status: number, message?: string) {
+    super(message || `API request failed: ${status}`);
+    this.name = "ApiError";
+    this.status = status;
+  }
+}
+
+export type SessionResponse = {
+  authenticated: true;
+  user: {
+    id: number;
+    email: string;
+  };
+};
+
 async function apiRequest<T>(
   path: string,
   options: ApiRequestOptions = {}
@@ -35,7 +53,7 @@ async function apiRequest<T>(
   });
 
   if (!response.ok) {
-    throw new Error(`API request failed: ${response.status}`);
+    throw new ApiError(response.status);
   }
 
   if (response.status === 204) {
@@ -51,6 +69,10 @@ export function googleAuthUrl() {
 
 export async function fetchHealth() {
   return apiRequest<{ status: string }>("/health");
+}
+
+export async function fetchSession() {
+  return apiRequest<SessionResponse>("/session");
 }
 
 export async function fetchEmails() {

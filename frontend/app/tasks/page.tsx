@@ -1,14 +1,21 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import AuthRequiredState from "@/components/AuthRequiredState";
 import TaskList from "../../components/TaskList";
-import { fetchTasks as fetchTasksRequest } from "@/lib/api";
+import {
+  ApiError,
+  fetchSession,
+  fetchTasks as fetchTasksRequest,
+} from "@/lib/api";
 
 type FilterType = "all" | "today" | "pending" | "completed";
 
 export default function TasksPage() {
   const [tasks, setTasks] = useState<any[]>([]);
   const [filter, setFilter] = useState<FilterType>("all");
+  const [loading, setLoading] = useState(true);
+  const [isAuthenticated, setIsAuthenticated] = useState(true);
 
   const fetchTasks = async () => {
     try {
@@ -20,7 +27,25 @@ export default function TasksPage() {
   };
 
   useEffect(() => {
-    fetchTasks();
+    const loadSessionAndTasks = async () => {
+      try {
+        await fetchSession();
+        setIsAuthenticated(true);
+        await fetchTasks();
+      } catch (err) {
+        if (err instanceof ApiError && err.status === 401) {
+          setIsAuthenticated(false);
+          setLoading(false);
+          return;
+        }
+
+        console.error("Session check failed", err);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    loadSessionAndTasks();
   }, []);
 
   const isToday = (date: string) => {
@@ -41,6 +66,16 @@ export default function TasksPage() {
         return true;
     }
   });
+
+  if (loading) return <p className="p-6">Loading...</p>;
+  if (!isAuthenticated) {
+    return (
+      <AuthRequiredState
+        title="Sign in to manage tasks"
+        message="Connect your Gmail account to load extracted tasks and update their status."
+      />
+    );
+  }
 
   return (
     <div className="p-6">

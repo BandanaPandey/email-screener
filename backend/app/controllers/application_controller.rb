@@ -6,10 +6,8 @@ class ApplicationController < ActionController::API
   private
 
   def set_current_user
-    # 🔐 Option 1: Session-based (OmniAuth / Google login)
     if session[:user_id]
       @current_user = User.find_by(id: session[:user_id])
-      puts "Current user set from session: #{@current_user.inspect}"
     end
   end
 
