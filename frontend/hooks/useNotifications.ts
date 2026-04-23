@@ -1,20 +1,22 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import type { Email, NotificationItem } from "@/lib/types";
 
-export default function useNotifications(emails: any[]) {
-  const [notifications, setNotifications] = useState<any[]>([]);
+export default function useNotifications(emails: Email[]) {
+  const [notifications, setNotifications] = useState<NotificationItem[]>([]);
 
   useEffect(() => {
     if (!emails || emails.length === 0) return;
 
-    const newNotifications: any[] = [];
+    const newNotifications: NotificationItem[] = [];
 
     emails.forEach((email) => {
       const insight = email.email_insight;
+      const priorityScore = insight?.priority_score ?? 0;
 
       // 🔥 High priority email
-      if (insight?.priority_score > 80) {
+      if (priorityScore > 80) {
         newNotifications.push({
           type: "priority",
           message: `High priority: ${email.subject}`,
@@ -22,7 +24,7 @@ export default function useNotifications(emails: any[]) {
       }
 
       // 🔥 Tasks due today
-      email.tasks?.forEach((task: any) => {
+      email.tasks.forEach((task) => {
         if (!task.due_date) return;
 
         const due = new Date(task.due_date);

@@ -7,9 +7,14 @@ import {
   fetchAiSummary,
   updateTaskStatus,
 } from "@/lib/api";
+import type { Email, EmailTask } from "@/lib/types";
 
-export default function EmailDetail({ email }: any) {
-  const [tasks, setTasks] = useState(email.tasks || []);
+type Props = {
+  email: Email;
+};
+
+export default function EmailDetail({ email }: Props) {
+  const [tasks, setTasks] = useState<EmailTask[]>(email.tasks || []);
   const [reply, setReply] = useState("");
   const [summary, setSummary] = useState("");
   const [loading, setLoading] = useState<string | null>(null);
@@ -27,11 +32,26 @@ export default function EmailDetail({ email }: any) {
     setTone("professional"); // reset tone
   }, [email.id]);
 
+  const extractedTaskToEmailTask = (
+    task: {
+      title: string;
+      due_date: string | null;
+      priority: EmailTask["priority"];
+    },
+    index: number
+  ): EmailTask => ({
+    id: -(index + 1),
+    title: task.title,
+    due_date: task.due_date,
+    priority: task.priority,
+    status: "pending",
+  });
+
   const toggleTask = async (taskId: number, status: string) => {
     const newStatus = status === "completed" ? "pending" : "completed";
 
     // Optimistic UI
-    setTasks((prev: any[]) =>
+    setTasks((prev) =>
       prev.map((t) =>
         t.id === taskId ? { ...t, status: newStatus } : t
       )
@@ -58,7 +78,11 @@ export default function EmailDetail({ email }: any) {
       } else {
         const data = await extractTasksRequest(email.id, tone);
         if (Array.isArray(data.tasks)) {
-          setTasks(data.tasks);
+          setTasks(
+            data.tasks.map((task, index) =>
+              extractedTaskToEmailTask(task, index)
+            )
+          );
         }
       }
     } catch (err) {
@@ -110,7 +134,7 @@ export default function EmailDetail({ email }: any) {
           <h3 className="font-semibold mb-2">Tasks</h3>
 
           <ul className="space-y-2">
-            {tasks.map((task: any) => (
+            {tasks.map((task) => (
               <li
                 key={task.id}
                 className="flex justify-between items-center bg-white p-2 rounded border"

@@ -1,8 +1,11 @@
 "use client";
 
+import { isActionRequired } from "@/lib/email";
+import type { Email } from "@/lib/types";
+
 type Props = {
-  emails: any[];
-  onSelect: (email: any) => void;
+  emails: Email[];
+  onSelect: (email: Email) => void;
 };
 
 export default function EmailList({ emails, onSelect }: Props) {
@@ -12,20 +15,6 @@ export default function EmailList({ emails, onSelect }: Props) {
     if (score > 0.4)
       return { label: "⚡ Medium", color: "bg-yellow-400" };
     return { label: "🧊 Low", color: "bg-gray-300" };
-  };
-
-  const isActionRequired = (email: any) => {
-    if (email.tasks?.length > 0) return true;
-
-    const summary =
-      email.email_insight?.summary?.toLowerCase() || "";
-
-    return (
-      summary.includes("reply") ||
-      summary.includes("submit") ||
-      summary.includes("complete") ||
-      summary.includes("schedule")
-    );
   };
 
   return (
@@ -58,9 +47,9 @@ export default function EmailList({ emails, onSelect }: Props) {
               </span>
 
               <span className="text-xs text-gray-500">
-                {new Date(
-                  email.received_at
-                ).toLocaleDateString()}
+                {email.received_at
+                  ? new Date(email.received_at).toLocaleDateString()
+                  : "Unknown date"}
               </span>
             </div>
 

@@ -1,3 +1,12 @@
+import type {
+  CollectionResponse,
+  Email,
+  ExtractedTask,
+  Rule,
+  Task,
+  UserSession,
+} from "@/lib/types";
+
 const FALLBACK_API_BASE_URL = "http://localhost:3000";
 const FALLBACK_APP_URL = "http://localhost:3001";
 
@@ -20,14 +29,6 @@ export class ApiError extends Error {
     this.status = status;
   }
 }
-
-export type SessionResponse = {
-  authenticated: true;
-  user: {
-    id: number;
-    email: string;
-  };
-};
 
 async function apiRequest<T>(
   path: string,
@@ -72,11 +73,11 @@ export async function fetchHealth() {
 }
 
 export async function fetchSession() {
-  return apiRequest<SessionResponse>("/session");
+  return apiRequest<UserSession>("/session");
 }
 
 export async function fetchEmails() {
-  return apiRequest<any[]>("/emails");
+  return apiRequest<CollectionResponse<Email>>("/emails");
 }
 
 export async function syncEmails() {
@@ -86,11 +87,11 @@ export async function syncEmails() {
 }
 
 export async function fetchTasks() {
-  return apiRequest<any[]>("/tasks");
+  return apiRequest<CollectionResponse<Task>>("/tasks");
 }
 
 export async function updateTaskStatus(taskId: number, status: string) {
-  return apiRequest(`/tasks/${taskId}`, {
+  return apiRequest<{ task: Task }>(`/tasks/${taskId}`, {
     method: "PATCH",
     body: {
       task: { status },
@@ -99,11 +100,11 @@ export async function updateTaskStatus(taskId: number, status: string) {
 }
 
 export async function fetchRules() {
-  return apiRequest<any[]>("/rules");
+  return apiRequest<CollectionResponse<Rule>>("/rules");
 }
 
 export async function createRule(rule: Record<string, string>) {
-  return apiRequest("/rules", {
+  return apiRequest<{ rule: Rule }>("/rules", {
     method: "POST",
     body: { rule },
   });
@@ -136,7 +137,7 @@ export async function fetchAiSummary(emailId: number, tone: string) {
 }
 
 export async function extractTasks(emailId: number, tone: string) {
-  return apiRequest<{ tasks: any[] }>("/ai/extract_tasks", {
+  return apiRequest<{ tasks: ExtractedTask[] }>("/ai/extract_tasks", {
     method: "POST",
     body: {
       email_id: emailId,

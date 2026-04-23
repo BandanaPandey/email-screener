@@ -1,9 +1,15 @@
 "use client";
 
 import { updateTaskStatus } from "@/lib/api";
+import type { Task } from "@/lib/types";
 
-export default function TaskList({ tasks, refresh }: any) {
-  const toggleTask = async (task: any) => {
+type Props = {
+  tasks: Task[];
+  refresh: () => Promise<void>;
+};
+
+export default function TaskList({ tasks, refresh }: Props) {
+  const toggleTask = async (task: Task) => {
     const newStatus =
       task.status === "completed" ? "pending" : "completed";
 
@@ -18,7 +24,7 @@ export default function TaskList({ tasks, refresh }: any) {
 
   return (
     <div className="space-y-3">
-      {tasks.map((task: any) => (
+      {tasks.map((task) => (
         <div
           key={task.id}
           className="p-4 border rounded-xl bg-white flex justify-between items-center"

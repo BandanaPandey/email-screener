@@ -13,6 +13,8 @@ import {
   fetchSession,
   syncEmails as syncEmailsRequest,
 } from "@/lib/api";
+import { isActionRequired } from "@/lib/email";
+import type { Email } from "@/lib/types";
 
 type FilterType =
   | "all"
@@ -22,8 +24,8 @@ type FilterType =
   | "job";
 
 export default function DashboardPage() {
-  const [emails, setEmails] = useState<any[]>([]);
-  const [selectedEmail, setSelectedEmail] = useState<any>(null);
+  const [emails, setEmails] = useState<Email[]>([]);
+  const [selectedEmail, setSelectedEmail] = useState<Email | null>(null);
   const [loading, setLoading] = useState(true);
   const [syncing, setSyncing] = useState(false);
   const [filter, setFilter] = useState<FilterType>("all");
@@ -43,7 +45,7 @@ export default function DashboardPage() {
   const fetchEmails = async () => {
     try {
       const data = await fetchEmailsRequest();
-      setEmails(Array.isArray(data) ? data : []);
+      setEmails(data.items);
     } catch (err) {
       console.error("Fetch failed", err);
       setEmails([]);
@@ -97,20 +99,6 @@ export default function DashboardPage() {
   };
 
   // 🔥 Detect action-required emails
-  const isActionRequired = (email: any) => {
-    if (email.tasks?.length > 0) return true;
-
-    const summary =
-      email.email_insight?.summary?.toLowerCase() || "";
-
-    return (
-      summary.includes("reply") ||
-      summary.includes("submit") ||
-      summary.includes("complete") ||
-      summary.includes("schedule")
-    );
-  };
-
   // 🔥 Filtering
   const filteredEmails = emails.filter((email) => {
     const category = email.email_insight?.category;
@@ -146,8 +134,10 @@ export default function DashboardPage() {
     if (Notification.permission !== "granted") return;
 
     sortedEmails.forEach((email) => {
+      const priorityScore = email.email_insight?.priority_score ?? 0;
+
       if (
-        email.email_insight?.priority_score > 85 &&
+        priorityScore > 85 &&
         !notifiedIds.has(email.id)
       ) {
         new Notification("🔥 High Priority Email", {

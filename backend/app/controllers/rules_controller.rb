@@ -2,12 +2,12 @@ class RulesController < ApplicationController
   before_action :authenticate_user!
   
   def index
-    render json: current_user.rules
+    render json: { items: current_user.rules }
   end
 
   def create
     rule = current_user.rules.create!(rule_params)
-    render json: rule
+    render json: { rule: rule }
   end
 
   def destroy

@@ -28,7 +28,8 @@ class AiController < ApplicationController
   def extract_tasks
     email = current_user.emails.find(params[:email_id])
 
-    tasks = Ai::TaskExtractionService.new(email).call
+    task_result = Ai::TaskExtractionService.new(email).call
+    tasks = task_result.is_a?(Hash) ? task_result["tasks"] || task_result[:tasks] || [] : []
 
     render json: { tasks: tasks }
   end

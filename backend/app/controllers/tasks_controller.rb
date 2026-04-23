@@ -6,12 +6,12 @@ class TasksController < ApplicationController
   def index
     tasks = current_user.tasks.includes(:email).order(created_at: :desc)
 
-    render json: tasks.as_json(include: :email)
+    render json: { items: tasks.as_json(include: { email: { only: [:id, :subject] } }) }
   end
 
   def update
     if @task.update(task_params)
-      render json: @task
+      render json: { task: @task.as_json(include: { email: { only: [:id, :subject] } }) }
     else
       render json: { error: "Update failed" }, status: 422
     end

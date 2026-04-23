@@ -8,11 +8,12 @@ import {
   fetchSession,
   fetchTasks as fetchTasksRequest,
 } from "@/lib/api";
+import type { Task } from "@/lib/types";
 
 type FilterType = "all" | "today" | "pending" | "completed";
 
 export default function TasksPage() {
-  const [tasks, setTasks] = useState<any[]>([]);
+  const [tasks, setTasks] = useState<Task[]>([]);
   const [filter, setFilter] = useState<FilterType>("all");
   const [loading, setLoading] = useState(true);
   const [isAuthenticated, setIsAuthenticated] = useState(true);
@@ -20,7 +21,7 @@ export default function TasksPage() {
   const fetchTasks = async () => {
     try {
       const data = await fetchTasksRequest();
-      setTasks(Array.isArray(data) ? data : []);
+      setTasks(data.items);
     } catch (err) {
       console.error("Failed to fetch tasks", err);
     }

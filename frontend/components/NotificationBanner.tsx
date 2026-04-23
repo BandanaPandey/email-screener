@@ -1,11 +1,17 @@
 "use client";
 
-export default function NotificationBanner({ notifications }: any) {
+import type { NotificationItem } from "@/lib/types";
+
+type Props = {
+  notifications: NotificationItem[];
+};
+
+export default function NotificationBanner({ notifications }: Props) {
   if (!notifications.length) return null;
 
   return (
     <div className="mb-4 space-y-2">
-      {notifications.slice(0, 3).map((n: any, i: number) => (
+      {notifications.slice(0, 3).map((n, i) => (
         <div
           key={i}
           className={`p-3 rounded text-sm ${

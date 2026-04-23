@@ -9,9 +9,10 @@ import {
   fetchSession,
   fetchRules as fetchRulesRequest,
 } from "@/lib/api";
+import type { Rule } from "@/lib/types";
 
 export default function RulesPage() {
-  const [rules, setRules] = useState<any[]>([]);
+  const [rules, setRules] = useState<Rule[]>([]);
   const [loading, setLoading] = useState(true);
   const [isAuthenticated, setIsAuthenticated] = useState(true);
   const [form, setForm] = useState({
@@ -23,7 +24,7 @@ export default function RulesPage() {
 
   const fetchRules = async () => {
     const data = await fetchRulesRequest();
-    setRules(Array.isArray(data) ? data : []);
+    setRules(data.items);
   };
 
   useEffect(() => {
