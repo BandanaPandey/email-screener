@@ -1,20 +1,9 @@
 module EmailProviders
   class ProviderFactory
     def self.build(user, account)
-      case account.provider
-      when "google"
-        GmailService.new(user, account)
+      return GmailService.new(user, account) if account.provider == "google"
 
-      # future support
-      when "outlook"
-        OutlookService.new(user, account)
-
-      when "imap"
-        ImapService.new(user, account)
-
-      else
-        raise "Unsupported provider: #{account.provider}"
-      end
+      raise "Unsupported provider for v1: #{account.provider}"
     end
   end
 end
