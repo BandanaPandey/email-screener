@@ -1,0 +1,69 @@
+name: Backend CI
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+
+jobs:
+  backend:
+    runs-on: ubuntu-latest
+
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd="pg_isready -U postgres"
+          --health-interval=10s
+          --health-timeout=5s
+          --health-retries=5
+
+    defaults:
+      run:
+        working-directory: backend
+
+    env:
+      RAILS_ENV: test
+      PGHOST: localhost
+      PGUSER: postgres
+      PGPASSWORD: postgres
+      GOOGLE_CLIENT_ID: test-google-client-id
+      GOOGLE_CLIENT_SECRET: test-google-client-secret
+      FRONTEND_APP_URL: http://localhost:3001
+      FRONTEND_APP_ORIGINS: http://localhost:3001
+      SESSION_COOKIE_SAME_SITE: lax
+      SESSION_COOKIE_SECURE: "false"
+      AI_PROVIDER: openai
+      OPENAI_API_KEY: test-openai-key
+
+    steps:
+      - name: Check out code
+        uses: actions/checkout@v4
+
+      - name: Set up Ruby
+        uses: ruby/setup-ruby@v1
+        with:
+          ruby-version: 3.2.0
+          bundler-cache: true
+          working-directory: backend
+
+      - name: Prepare databases
+        run: bundle exec rails db:prepare
+
+      - name: Run RuboCop
+        run: bundle exec bin/rubocop
+
+      - name: Run bundler-audit
+        run: bundle exec bin/bundler-audit
+
+      - name: Run Brakeman
+        run: bundle exec bin/brakeman --quiet --no-pager --exit-on-warn --exit-on-error
+
+      - name: Run Rails tests
+        run: bundle exec rails test
